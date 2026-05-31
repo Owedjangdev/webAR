@@ -1,0 +1,9 @@
+# Dépendances backend WebAR (FastAPI + SQLAlchemy + MySQL).
+# Stratégie (CLAUDE.md section 3) : installer la dernière version stable,
+# puis figer les versions exactes une fois testées via `pip freeze`.
+
+fastapi[standard]        # API REST + Uvicorn + validation Pydantic v2 (extra "standard")
+SQLAlchemy>=2.0,<2.1     # ORM style 2.0 (Mapped[...])
+PyMySQL>=1.1             # driver MySQL pour SQLAlchemy
+pydantic-settings>=2.0   # lecture de la config depuis .env
+cryptography             # requis par PyMySQL pour l'auth caching_sha2_password (MySQL 8)
