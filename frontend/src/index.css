@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base mobile-first : la racine occupe toute la hauteur de l'écran. */
+html,
+body,
+#root {
+  height: 100%;
+}
