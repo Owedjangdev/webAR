@@ -6,7 +6,12 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Experience
-from schemas.experience import ExperienceDetail, ExperienceSummary
+from schemas.experience import (
+    ExperienceCreate,
+    ExperienceDetail,
+    ExperienceSummary,
+    ExperienceUpdate,
+)
 from services import experience_service
 
 router = APIRouter(prefix="/api", tags=["experiences"])
@@ -35,4 +40,34 @@ def get_experience(experience_id: str, db: Session = Depends(get_db)) -> Experie
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Expérience '{experience_id}' introuvable.",
         )
+    return experience_service.to_detail(experience)
+
+
+@router.post(
+    "/experience",
+    response_model=ExperienceDetail,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_experience(
+    payload: ExperienceCreate, db: Session = Depends(get_db)
+) -> ExperienceDetail:
+    """Crée une expérience (et son lieu/ses assets si nécessaire).
+
+    Renvoie l'expérience créée au format du contrat JSON (section 6), code 201.
+    409 si l'identifiant public fourni existe déjà ; 404 si le place_id est inconnu.
+    """
+    experience = experience_service.create_experience(db, payload)
+    return experience_service.to_detail(experience)
+
+
+@router.put("/experience/{experience_id}", response_model=ExperienceDetail)
+def update_experience(
+    experience_id: str, payload: ExperienceUpdate, db: Session = Depends(get_db)
+) -> ExperienceDetail:
+    """Met à jour une expérience existante (champs fournis seulement).
+
+    Renvoie l'expérience à jour au format du contrat JSON (section 6).
+    404 si l'identifiant public n'existe pas.
+    """
+    experience = experience_service.update_experience(db, experience_id, payload)
     return experience_service.to_detail(experience)
