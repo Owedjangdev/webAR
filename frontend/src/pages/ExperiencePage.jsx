@@ -6,42 +6,36 @@ import ExperienceScreen from '../components/ExperienceScreen.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
 import { fetchExperience } from '../lib/api.js'
 
-// États de chargement de l'expérience.
-const LoadState = { LOADING: 'loading', SUCCESS: 'success', ERROR: 'error' }
+const MISSING_ID_MESSAGE =
+  "Aucun identifiant d'expérience dans l'URL (ex. /webar?id=exp_001)."
 
 /**
  * Page visiteur principale.
  * Lit l'identifiant dans l'URL (ex. /webar?id=exp_001), charge l'expérience
  * depuis l'API, puis affiche l'écran adapté : chargement, expérience ou erreur.
+ *
+ * Le résultat est mémorisé avec l'id auquel il correspond : tant que ce résultat
+ * ne concerne pas l'id courant, on affiche le chargement. Les états « pas d'id »
+ * et « chargement » sont ainsi dérivés du rendu, sans setState synchrone dans
+ * l'effet (cf. « You Might Not Need an Effect », doc React).
  */
 export default function ExperiencePage() {
   const [searchParams] = useSearchParams()
   const experienceId = searchParams.get('id')
 
-  const [state, setState] = useState(LoadState.LOADING)
-  const [experience, setExperience] = useState(null)
-  const [errorMessage, setErrorMessage] = useState('')
+  // { id, experience } en cas de succès, { id, error } en cas d'échec.
+  const [result, setResult] = useState(null)
 
   useEffect(() => {
-    if (!experienceId) {
-      setErrorMessage("Aucun identifiant d'expérience dans l'URL (ex. /webar?id=exp_001).")
-      setState(LoadState.ERROR)
-      return
-    }
+    if (!experienceId) return undefined
 
     let cancelled = false
-    setState(LoadState.LOADING)
-
     fetchExperience(experienceId)
-      .then((data) => {
-        if (cancelled) return
-        setExperience(data)
-        setState(LoadState.SUCCESS)
+      .then((experience) => {
+        if (!cancelled) setResult({ id: experienceId, experience })
       })
       .catch((error) => {
-        if (cancelled) return
-        setErrorMessage(error.message)
-        setState(LoadState.ERROR)
+        if (!cancelled) setResult({ id: experienceId, error: error.message })
       })
 
     return () => {
@@ -49,11 +43,15 @@ export default function ExperiencePage() {
     }
   }, [experienceId])
 
-  if (state === LoadState.LOADING) {
+  if (!experienceId) {
+    return <ErrorScreen message={MISSING_ID_MESSAGE} />
+  }
+  // Pas encore de résultat, ou résultat d'un id précédent : on charge.
+  if (!result || result.id !== experienceId) {
     return <LoadingScreen />
   }
-  if (state === LoadState.ERROR) {
-    return <ErrorScreen message={errorMessage} />
+  if (result.error) {
+    return <ErrorScreen message={result.error} />
   }
-  return <ExperienceScreen experience={experience} />
+  return <ExperienceScreen experience={result.experience} />
 }
