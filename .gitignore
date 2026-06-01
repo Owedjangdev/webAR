@@ -61,6 +61,10 @@ htmlcov/
 backend/static/uploads/*
 !backend/static/uploads/.gitkeep
 
+# QR codes PNG générés dynamiquement (garde le dossier, ignore les PNG) :
+backend/static/qr/*
+!backend/static/qr/.gitkeep
+
 # ============================================================
 # ÉDITEUR & SYSTÈME
 # ============================================================
