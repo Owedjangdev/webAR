@@ -110,10 +110,17 @@ function LiveCamera({
 }) {
   const [overlayOk, setOverlayOk] = useState(true)
 
-  // Branche le flux sur l'élément <video> une fois monté.
+  // Branche le flux sur l'élément <video> une fois monté, et nettoie la
+  // référence au démontage / changement de flux (pas de référence périmée).
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream
+    const video = videoRef.current
+    if (video && stream) {
+      video.srcObject = stream
+    }
+    return () => {
+      if (video) {
+        video.srcObject = null
+      }
     }
   }, [videoRef, stream])
 

@@ -1,5 +1,10 @@
 import { useCallback, useRef } from 'react'
 
+// Borne la résolution de l'image exportée : l'encodage toDataURL coûte avec le
+// nombre de pixels. Plafonner le grand côté garde la capture rapide (<= 2 s,
+// CLAUDE.md section 12) tout en restant net pour un souvenir.
+const MAX_CAPTURE_DIMENSION = 1280
+
 /**
  * Dessine une légende (message souvenir) lisible en bas de l'image capturée.
  */
@@ -39,9 +44,12 @@ export function useCanvas() {
       return null
     }
 
+    // Downscale si la vidéo dépasse la borne (les drawImage suivants s'adaptent
+    // automatiquement aux dimensions du canvas).
+    const scale = Math.min(1, MAX_CAPTURE_DIMENSION / Math.max(video.videoWidth, video.videoHeight))
     const canvas = canvasRef.current ?? (canvasRef.current = document.createElement('canvas'))
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
+    canvas.width = Math.round(video.videoWidth * scale)
+    canvas.height = Math.round(video.videoHeight * scale)
     const ctx = canvas.getContext('2d')
 
     // Caméra frontale : on capture en miroir, comme l'aperçu (selfie naturel).
