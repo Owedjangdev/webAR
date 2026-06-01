@@ -1,37 +1,20 @@
-import { useState } from 'react'
+import { createElement } from 'react'
 
-import { CameraStatus, useCamera } from '../hooks/useCamera.js'
-import CameraPermissionCard from './CameraPermissionCard.jsx'
-import CameraStage from './CameraStage.jsx'
-import NoCameraCard from './NoCameraCard.jsx'
-import ScreenLayout from './ScreenLayout.jsx'
+import { resolveTemplate } from '../templates/registry.js'
 
 /**
- * Écran d'affichage de l'expérience.
- * Orchestre les 3 vues : demande caméra, flux caméra actif, mode sans caméra.
+ * Chargeur dynamique de template AR.
+ * Lit le champ `template` du contrat JSON (CLAUDE.md section 6), résout le
+ * composant correspondant via le registre, puis l'instancie avec les props
+ * communes (place, assets, config). Chaque template gère ensuite sa propre
+ * zone (caméra, badge, scan d'objet, étapes...) et son propre ScreenLayout.
+ *
+ * On passe par `createElement` car le composant est choisi dynamiquement à
+ * partir de la donnée : la règle react-compiler interdit une balise JSX
+ * `<Variable />` dont le type provient d'un appel de fonction.
  */
 export default function ExperienceScreen({ experience }) {
-  const { status, stream, start, stop } = useCamera()
-  const [withoutCamera, setWithoutCamera] = useState(false)
-  const { place, config } = experience
+  const { template, place, assets, config } = experience
 
-  let content
-  if (status === CameraStatus.ACTIVE) {
-    content = <CameraStage stream={stream} place={place} config={config} onStop={stop} />
-  } else if (withoutCamera) {
-    content = (
-      <NoCameraCard experience={experience} onEnableCamera={() => setWithoutCamera(false)} />
-    )
-  } else {
-    content = (
-      <CameraPermissionCard
-        place={place}
-        status={status}
-        onAllow={start}
-        onContinueWithout={() => setWithoutCamera(true)}
-      />
-    )
-  }
-
-  return <ScreenLayout>{content}</ScreenLayout>
+  return createElement(resolveTemplate(template), { template, place, assets, config })
 }

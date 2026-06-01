@@ -9,8 +9,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000
  * @returns {Promise<object>} le JSON de l'expérience.
  * @throws {Error} si l'expérience est introuvable ou l'API injoignable.
  */
-export async function fetchExperience(experienceI) {
-  const response = await fetch(`${API_BASE_URL}/api/experience/${experienceI}`)
+export async function fetchExperience(experienceId) {
+  const response = await fetch(`${API_BASE_URL}/api/experience/${experienceId}`)
 
   if (response.status === 404) {
     throw new Error('Expérience introuvable.')
