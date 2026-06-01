@@ -10,15 +10,15 @@ from urllib.parse import urlencode
 import qrcode
 from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from config import settings
 from models import Experience, QrCode
 from schemas.qr import QrCodeOut
 
-# Chemins absolus (indépendants du répertoire d'où uvicorn est lancé).
+# Dossier backend (chemin absolu, indépendant du répertoire d'où uvicorn est lancé).
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
-_QR_DIR = _BACKEND_DIR / "static" / "qr"
 
 # Route du frontend qui lit le paramètre ?id= (cf. App.jsx). Le host, lui, vient
 # de la config (.env) : aucune URL n'est codée en dur.
@@ -58,21 +58,38 @@ def generate_qr(db: Session, public_id: str) -> QrCode:
     404 si l'expérience n'existe pas.
     """
     experience = _get_experience_or_404(db, public_id)
+    experience_pk = experience.id
     url = build_experience_url(public_id)
 
-    # Garantit l'existence du dossier de sortie (gère le cas où il manque).
-    _QR_DIR.mkdir(parents=True, exist_ok=True)
-    qrcode.make(url).save(_QR_DIR / f"{public_id}.png")
-
+    # Une seule source de vérité pour le chemin : relatif (BDD) et absolu (écriture)
+    # dérivent du même helper.
     relative_path = _relative_image_path(public_id)
-    qr = db.scalar(select(QrCode).where(QrCode.experience_id == experience.id))
-    if qr is None:
-        qr = QrCode(experience_id=experience.id, url=url, image_path=relative_path)
-        db.add(qr)
-    else:
+    image_path = _BACKEND_DIR / relative_path
+
+    # Garantit l'existence du dossier de sortie (gère le cas où il manque).
+    image_path.parent.mkdir(parents=True, exist_ok=True)
+    qrcode.make(url).save(image_path)
+
+    qr = db.scalar(select(QrCode).where(QrCode.experience_id == experience_pk))
+    if qr is not None:
         qr.url = url
         qr.image_path = relative_path
-    db.commit()
+        db.commit()
+        db.refresh(qr)
+        return qr
+
+    qr = QrCode(experience_id=experience_pk, url=url, image_path=relative_path)
+    db.add(qr)
+    try:
+        db.commit()
+    except IntegrityError:
+        # Course entre deux POST concurrents : la ligne a été créée entre-temps.
+        # On repart de la ligne existante et on la met à jour (au lieu d'un 500).
+        db.rollback()
+        qr = db.scalar(select(QrCode).where(QrCode.experience_id == experience_pk))
+        qr.url = url
+        qr.image_path = relative_path
+        db.commit()
     db.refresh(qr)
     return qr
 
