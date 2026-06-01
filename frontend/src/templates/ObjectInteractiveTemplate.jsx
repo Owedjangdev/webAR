@@ -10,7 +10,7 @@ export default function ObjectInteractiveTemplate({ place, config }) {
   return (
     <ARTemplateShell
       icon={Box}
-      label="Objet InteractifAR"
+      label="Objet Interactif AR"
       accentBg="bg-emerald-100"
       accentText="text-emerald-700"
       place={place}
