@@ -7,5 +7,6 @@ Importe tous les modèles pour qu'ils soient enregistrés sur Base.metadata
 from models.asset import Asset, AssetType
 from models.experience import Experience
 from models.place import Place
+from models.qr_code import QrCode
 
-__all__ = ["Asset", "AssetType", "Experience", "Place"]
+__all__ = ["Asset", "AssetType", "Experience", "Place", "QrCode"]

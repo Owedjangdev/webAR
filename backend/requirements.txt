@@ -7,3 +7,4 @@ SQLAlchemy>=2.0,<2.1     # ORM style 2.0 (Mapped[...])
 PyMySQL>=1.1             # driver MySQL pour SQLAlchemy
 pydantic-settings>=2.0   # lecture de la config depuis .env
 cryptography             # requis par PyMySQL pour l'auth caching_sha2_password (MySQL 8)
+qrcode[pil]>=8.0         # génération des QR codes PNG (tire Pillow)

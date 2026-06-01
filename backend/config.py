@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     # Origines autorisées par CORS (frontend React), séparées par des virgules.
     cors_origins: str = "http://localhost:5173"
 
+    # URL de base publique du frontend : sert à construire l'URL encodée dans le QR.
+    frontend_base_url: str = "http://localhost:5173"
+
     # Affiche les requêtes SQL dans la console (utile en dev, à laisser à false en prod).
     sql_echo: bool = False
 

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from database import Base, engine
-from routers import experiences
+from routers import experiences, qr
 
 # Crée les tables manquantes au démarrage (pratique en dev S1).
 # En production, le schéma sera géré par Alembic (cf. CLAUDE.md section 3).
@@ -28,6 +28,7 @@ app.add_middleware(
 )
 
 app.include_router(experiences.router)
+app.include_router(qr.router)
 
 
 @app.get("/", tags=["health"])
