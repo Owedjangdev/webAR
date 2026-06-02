@@ -167,7 +167,11 @@ export default function CropEditor({ image, onRetake }) {
 
   const onPointerUp = (event) => {
     pointersRef.current.delete(event.pointerId)
-    event.currentTarget.releasePointerCapture?.(event.pointerId)
+    // Ne libère la capture que si cet élément la détient (évite NotFoundError
+    // sur pointercancel / pointerleave où le pointeur n'a pas/plus la capture).
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
     if (pointersRef.current.size >= 1) {
       startGesture() // ex. on relâche un doigt après un pinch -> on repasse en pan
     } else {
