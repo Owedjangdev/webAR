@@ -1,17 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  ArrowLeft,
-  Camera,
-  CameraOff,
-  Download,
-  MapPin,
-  RotateCcw,
-  ShieldCheck,
-  SwitchCamera,
-} from 'lucide-react'
+import { ArrowLeft, Camera, CameraOff, MapPin, ShieldCheck, SwitchCamera } from 'lucide-react'
 
 import { CameraStatus, FacingMode, useCamera } from '../hooks/useCamera.js'
 import { useCanvas } from '../hooks/useCanvas.js'
+import CropEditor from '../components/CropEditor.jsx'
 import ARTemplateShell from './ARTemplateShell.jsx'
 
 // Messages d'aide selon l'échec d'accès caméra (fallbacks, CLAUDE.md section 11).
@@ -48,9 +40,9 @@ export default function SelfieSouvenirTemplate({ place, assets, config }) {
     setCaptureError(image === null)
   }
 
-  // 1) Aperçu du souvenir capturé (partage complet : semaine 4).
+  // 1) Recadrage / ajustement du souvenir capturé avant enregistrement.
   if (capturedImage) {
-    return <CapturePreview image={capturedImage} onRetake={() => setCapturedImage(null)} />
+    return <CropEditor image={capturedImage} onRetake={() => setCapturedImage(null)} />
   }
 
   // 2) Caméra active : expérience plein écran.
@@ -220,33 +212,6 @@ function IconButton({ label, onClick, children }) {
     >
       {children}
     </button>
-  )
-}
-
-/** Aperçu plein écran du souvenir capturé (télécharger / reprendre). */
-function CapturePreview({ image, onRetake }) {
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black">
-      <img src={image} alt="Souvenir capturé" className="min-h-0 flex-1 object-contain" />
-      <div className="flex items-center justify-center gap-3 bg-black/80 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <a
-          href={image}
-          download="souvenir.png"
-          className="flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-5 py-3 font-semibold text-white shadow-lg outline-none transition hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white"
-        >
-          <Download className="h-5 w-5" />
-          Télécharger
-        </a>
-        <button
-          type="button"
-          onClick={onRetake}
-          className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 font-semibold text-white outline-none transition hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white"
-        >
-          <RotateCcw className="h-5 w-5" />
-          Reprendre
-        </button>
-      </div>
-    </div>
   )
 }
 
