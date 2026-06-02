@@ -1,17 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  ArrowLeft,
-  Camera,
-  CameraOff,
-  Download,
-  MapPin,
-  RotateCcw,
-  ShieldCheck,
-  SwitchCamera,
-} from 'lucide-react'
+import { ArrowLeft, Camera, CameraOff, MapPin, ShieldCheck, SwitchCamera } from 'lucide-react'
 
 import { CameraStatus, FacingMode, useCamera } from '../hooks/useCamera.js'
 import { useCanvas } from '../hooks/useCanvas.js'
+import CropEditor from '../components/CropEditor.jsx'
 import ARTemplateShell from './ARTemplateShell.jsx'
 
 // Messages d'aide selon l'échec d'accès caméra (fallbacks, CLAUDE.md section 11).
@@ -48,9 +40,9 @@ export default function SelfieSouvenirTemplate({ place, assets, config }) {
     setCaptureError(image === null)
   }
 
-  // 1) Aperçu du souvenir capturé (partage complet : semaine 4).
+  // 1) Recadrage / ajustement du souvenir capturé avant enregistrement.
   if (capturedImage) {
-    return <CapturePreview image={capturedImage} onRetake={() => setCapturedImage(null)} />
+    return <CropEditor image={capturedImage} onRetake={() => setCapturedImage(null)} />
   }
 
   // 2) Caméra active : expérience plein écran.
@@ -125,7 +117,7 @@ function LiveCamera({
   }, [videoRef, stream])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
+    <div className="fixed inset-0 z-50 overflow-hidden overscroll-contain bg-black">
       <video
         ref={videoRef}
         autoPlay
@@ -146,8 +138,12 @@ function LiveCamera({
         />
       )}
 
+      {/* Voiles dégradés haut/bas : lisibilité des contrôles par-dessus la vidéo. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/55 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/70 to-transparent" />
+
       {/* Barre du haut : retour, badge lieu, changement de caméra. */}
-      <div className="absolute inset-x-0 top-0 flex items-start justify-between p-4">
+      <div className="absolute inset-x-0 top-0 flex items-start justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <IconButton label="Fermer la caméra" onClick={onClose}>
           <ArrowLeft className="h-5 w-5" />
         </IconButton>
@@ -157,28 +153,27 @@ function LiveCamera({
         </IconButton>
       </div>
 
-      {/* Message souvenir + erreur de capture éventuelle. */}
-      <div className="absolute inset-x-0 bottom-32 flex flex-col items-center gap-2 px-6">
+      {/* Bas : message souvenir, erreur éventuelle, puis bouton obturateur. */}
+      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-4 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10">
         {captureError && (
-          <p className="rounded-xl bg-red-500/80 px-3 py-2 text-center text-xs text-white">
+          <p className="rounded-xl bg-red-500/85 px-3 py-2 text-center text-xs text-white">
             Capture impossible : l'overlay n'autorise pas l'export (CORS).
           </p>
         )}
         {config?.message && (
-          <p className="rounded-full bg-black/40 px-4 py-2 text-center text-sm text-white backdrop-blur">
+          <p className="max-w-[80%] rounded-full bg-black/45 px-4 py-2 text-center text-sm text-white backdrop-blur">
             {config.message}
           </p>
         )}
-      </div>
 
-      {/* Gros bouton de capture rond. */}
-      <div className="absolute inset-x-0 bottom-8 flex justify-center">
         <button
           type="button"
           onClick={onCapture}
           aria-label="Capturer le souvenir"
-          className="h-20 w-20 rounded-full border-4 border-white/40 bg-white shadow-xl transition active:scale-95"
-        />
+          className="group mt-1 flex h-20 w-20 cursor-pointer items-center justify-center rounded-full border-[5px] border-white/80 p-1.5 outline-none transition active:scale-95 focus-visible:ring-2 focus-visible:ring-white"
+        >
+          <span className="h-full w-full rounded-full bg-white shadow-inner transition-transform duration-150 group-active:scale-75" />
+        </button>
       </div>
     </div>
   )
@@ -213,37 +208,10 @@ function IconButton({ label, onClick, children }) {
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur transition active:scale-95"
+      className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white outline-none backdrop-blur transition hover:bg-black/55 active:scale-95 focus-visible:ring-2 focus-visible:ring-white/70"
     >
       {children}
     </button>
-  )
-}
-
-/** Aperçu plein écran du souvenir capturé (télécharger / reprendre). */
-function CapturePreview({ image, onRetake }) {
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black">
-      <img src={image} alt="Souvenir capturé" className="min-h-0 flex-1 object-contain" />
-      <div className="flex items-center justify-center gap-3 bg-black/80 p-4">
-        <a
-          href={image}
-          download="souvenir.png"
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-5 py-3 font-semibold text-white shadow-lg"
-        >
-          <Download className="h-5 w-5" />
-          Télécharger
-        </a>
-        <button
-          type="button"
-          onClick={onRetake}
-          className="flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 font-semibold text-white"
-        >
-          <RotateCcw className="h-5 w-5" />
-          Reprendre
-        </button>
-      </div>
-    </div>
   )
 }
 
@@ -267,14 +235,14 @@ function PermissionPrompt({ status, withoutCamera, onAllow, onContinueWithout })
           <button
             type="button"
             onClick={onAllow}
-            className="w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-3 font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:brightness-110"
+            className="w-full cursor-pointer rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-3 font-semibold text-white shadow-lg shadow-brand-600/30 outline-none transition hover:brightness-110 focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             Autoriser la caméra
           </button>
           <button
             type="button"
             onClick={onContinueWithout}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-brand-600 transition hover:bg-slate-50"
+            className="w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-brand-600 outline-none transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             Continuer sans caméra
           </button>
