@@ -43,9 +43,14 @@ _PUBLIC_ID_RE = re.compile(rf"^{_PUBLIC_ID_PREFIX}(\d+)$")
 # ---------------------------------------------------------------------------
 
 
-def _build_assets(assets: list[Asset]) -> ExperienceAssets:
-    """Mappe les assets d'un lieu vers le bloc 'assets' du contrat JSON."""
-    url_by_type = {asset.type: asset.url for asset in assets}
+def _build_assets(experience: Experience) -> ExperienceAssets:
+    """Construit le bloc 'assets' du contrat en fusionnant les assets du LIEU
+    puis de l'EXPÉRIENCE (l'expérience est prioritaire)."""
+    url_by_type: dict[AssetType, str] = {}
+    for asset in experience.place.assets:  # niveau lieu (partagé entre expériences)
+        url_by_type[asset.type] = asset.url
+    for asset in experience.assets:  # niveau expérience (prioritaire)
+        url_by_type[asset.type] = asset.url
     return ExperienceAssets(
         overlay_image=url_by_type.get(AssetType.overlay),
         logo=url_by_type.get(AssetType.logo),
@@ -63,7 +68,7 @@ def to_detail(experience: Experience) -> ExperienceDetail:
         experience_id=experience.public_id,
         template=experience.template,
         place=_place_out(experience),
-        assets=_build_assets(experience.place.assets),
+        assets=_build_assets(experience),
         config=experience.config_json,
     )
 
@@ -112,14 +117,14 @@ def _resolve_place(db: Session, payload: ExperienceCreate) -> Place:
     return place
 
 
-def _apply_assets(place: Place, assets: ExperienceAssets) -> None:
-    """Met à jour (upsert) les assets du lieu d'après le bloc 'assets' fourni.
+def _apply_assets(experience: Experience, assets: ExperienceAssets) -> None:
+    """Upsert les assets de NIVEAU EXPÉRIENCE d'après le bloc 'assets' du contrat.
 
-    Un seul asset par type et par lieu : si une URL est fournie pour un type,
+    Un seul asset par type et par expérience : si une URL est fournie pour un type,
     l'asset existant est mis à jour, sinon il est créé. Les valeurs None sont
     ignorées (on ne supprime pas un asset existant).
     """
-    existing_by_type = {asset.type: asset for asset in place.assets}
+    existing_by_type = {asset.type: asset for asset in experience.assets}
     for key, asset_type in _ASSET_TYPE_BY_KEY.items():
         url = getattr(assets, key)
         if url is None:
@@ -128,7 +133,7 @@ def _apply_assets(place: Place, assets: ExperienceAssets) -> None:
         if asset is not None:
             asset.url = url
         else:
-            place.assets.append(Asset(type=asset_type, url=url))
+            experience.assets.append(Asset(type=asset_type, url=url))
 
 
 def _get_or_404(db: Session, public_id: str) -> Experience:
@@ -159,8 +164,6 @@ def create_experience(db: Session, payload: ExperienceCreate) -> Experience:
         )
 
     place = _resolve_place(db, payload)
-    _apply_assets(place, payload.assets)
-
     experience = Experience(
         public_id=public_id,
         template=payload.template,
@@ -168,6 +171,8 @@ def create_experience(db: Session, payload: ExperienceCreate) -> Experience:
         active=payload.active,
         place=place,
     )
+    _apply_assets(experience, payload.assets)
+
     db.add(experience)
     db.commit()
     db.refresh(experience)
@@ -187,7 +192,7 @@ def update_experience(
     if payload.active is not None:
         experience.active = payload.active
     if payload.assets is not None:
-        _apply_assets(experience.place, payload.assets)
+        _apply_assets(experience, payload.assets)
 
     db.commit()
     db.refresh(experience)
