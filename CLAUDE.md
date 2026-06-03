@@ -19,15 +19,17 @@ Un visiteur scanne un QR code dans un lieu physique → le frontend charge une e
 
 ## 2. État d'avancement actuel
 
-> **⚠️ NOUS SOMMES EN SEMAINE 1 — projet reparti de zéro.**
-> Objectif S1 : mettre en place les bases et obtenir des **environnements fonctionnels et communicants**.
-> - **Frontend** : initialiser le projet React + Vite + Tailwind, structure des dossiers, premier accès caméra via `getUserMedia`, pages de base (chargement expérience, affichage simple, page erreur). Lire `experience_id` depuis l'URL (ex. `/webar?id=exp_001`).
-> - **Backend** : initialiser FastAPI + SQLAlchemy, configurer MySQL, créer les tables de base (`places`, `experiences`, `assets`...), créer une expérience de test (ex. `exp_001`), exposer `GET /api/experiences` et `GET /api/experience/{id}` avec un JSON simple et stable. Configurer CORS.
-> - **Test d'intégration de fin S1** : le frontend appelle `GET /api/experience/exp_001` et affiche les données (nom du lieu, ville, template, message). Vérifier que CORS ne bloque pas.
+> **⚠️ NOUS SOMMES EN SEMAINE 4.** Les bases sont posées et fonctionnelles ; on enrichit le backend et les templates.
 >
-> Jalon S1 : React démarre sur `localhost:5173`, FastAPI sur `localhost:8000`, MySQL connecté, et les deux communiquent.
+> **Fait (S1 → S4) :**
+> - **S1** — Frontend React + Vite + Tailwind v3.4 (pages chargement / expérience / erreur, hook `useCamera`). Backend FastAPI + SQLAlchemy + MySQL, `GET /api/experiences` et `GET /api/experience/{id}`, CORS. Intégration front↔back validée.
+> - **S2** — CRUD expériences (`POST` / `PUT /api/experience`) ; côté frontend, **chargeur de templates dynamique** (registre lisant le champ `template`).
+> - **S3** — Génération de **QR codes** (`POST` / `GET /api/qr/{id}`, table `qr_codes`) ; template **Selfie SouvenirAR** complet (caméra, overlay, capture, recadrage pinch-to-zoom).
+> - **S4** — Gestion des **assets** : asset lié à un **lieu OU une expérience** (cf. section 7), `POST /api/assets` (upsert, un par type) + `GET /api/assets/{id}`, champ `alt_text`, types `overlay/logo/badge/image/audio`. Revue CORS.
 >
-> ⚠️ Le **contrat JSON** (section 6) sera officiellement **figé en semaine 2**. En S1 il reste provisoire mais sert déjà de base d'échange.
+> Jalon courant : React sur `localhost:5173`, FastAPI sur `localhost:8000`, MySQL connecté, les deux communiquent.
+>
+> ✅ Le **contrat JSON** (section 6) est **figé** (depuis la S2) : `assets = {overlay_image, logo}`.
 
 Met à jour cette section au fil de l'avancement.
 
@@ -159,7 +161,7 @@ Règles :
 - **places** : `id` PK AI, `name` VARCHAR(255) NOT NULL, `city` VARCHAR(100) NOT NULL, `created_at` DATETIME DEFAULT NOW()
 - **experiences** : `id` PK AI, `place_id` FK→places.id, `template` VARCHAR(50) NOT NULL, `config_json` JSON NOT NULL, `active` TINYINT(1) DEFAULT 1
 - **qr_codes** : `id` PK AI, `experience_id` FK→experiences.id, `url` VARCHAR(500) NOT NULL, `image_path` VARCHAR(500)
-- **assets** : `id` PK AI, `place_id` FK→places.id, `type` ENUM(overlay/logo/badge/audio) NOT NULL, `url` VARCHAR(500) NOT NULL
+- **assets** : `id` PK AI, `place_id` FK→places.id NULL, `experience_id` FK→experiences.id NULL (**exactement un des deux**), `type` ENUM(overlay/logo/badge/image/audio) NOT NULL, `url` VARCHAR(500) NOT NULL, `alt_text` VARCHAR(255) NULL (accessibilité)
 
 **Tables additionnelles (backoffice + gamification, à confirmer) :**
 
@@ -168,6 +170,9 @@ Règles :
 - **anonymous_sessions** : progression visiteur sans compte
 
 > Statut expérience : le cahier des charges utilise `active` (TINYINT). Les diagrammes UML parlent de statuts `draft`/`published`. Harmoniser avec le binôme (ex. colonne `status ENUM('draft','published')`) — décision à acter dans le contrat.
+
+> ✅ **Décision actée (semaine 4 — cahier des charges + diagramme UML conciliés).** Un asset est lié **soit à un LIEU (`place_id`), soit à une EXPÉRIENCE (`experience_id`)** : les deux colonnes existent (nullable), **exactement une** est remplie. Cela respecte **à la fois** le cahier des charges (qui prévoyait `place_id`) **et** l'UML (qui prévoit `experience_id`). Asset de **lieu** = partagé par toutes ses expériences (ex. logo) ; asset d'**expérience** = propre à elle (ex. overlay), **prioritaire** lors de la fusion. Types = `overlay/logo/badge/image/audio` (union : `badge` du cahier + `image` de l'UML) ; champ `alt_text` ajouté (accessibilité, UML).
+> Le **contrat JSON (section 6) reste figé** : `assets = {overlay_image, logo}`. Les types `badge/image/audio` sont gérés via les endpoints `/api/assets` mais **ne remontent pas** dans `GET /api/experience/{id}` tant que le contrat n'est pas étendu **en accord binôme**.
 
 ---
 
@@ -422,3 +427,4 @@ Si une demande conduirait à du code peu clair ou dupliqué, **signale-le et pro
 6. **Refactoriser systématiquement** (section 16) : code propre, lisible, sans duplication, à chaque modification.
 7. **Utiliser les dernières versions stables** des dépendances (section 3), puis les épingler une fois testées. Vérifier la compatibilité navigateur (cible Chrome ≥ 80) avant d'adopter une version majeure.
 8. **Respecter le workflow Git** (section 16) : jamais de commit direct sur `main`, une branche `frontend/*` ou `backend/*` par fonctionnalité, et **rappeler à Épiphane de commit/push/merger** dès qu'une fonctionnalité est terminée.
+9. **Consulter les diagrammes (UML) AVANT de coder une tâche structurante** (modèle, relation entre entités, endpoint). Le **diagramme de classes fait foi sur le design** (entités, attributs, relations). Si le diagramme pertinent n'est pas fourni avec la tâche, **le demander à Épiphane avant de coder**. Objectif : éviter les contradictions design ↔ implémentation (ex. asset lié au lieu vs à l'expérience — tranché en S4 par l'UML : lié à l'expérience). En cas de conflit entre le cahier des charges (section 7) et l'UML, **le signaler et trancher avec le binôme**, puis acter la décision ici.

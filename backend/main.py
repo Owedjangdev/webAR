@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from database import Base, engine
-from routers import experiences, qr
+from routers import assets, experiences, qr
 
 # Crée les tables manquantes au démarrage (pratique en dev S1).
 # En production, le schéma sera géré par Alembic (cf. CLAUDE.md section 3).
@@ -18,17 +18,19 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS strict : seules les origines React connues sont autorisées (cf. .env).
+# CORS strict : seules les origines React connues (.env CORS_ORIGINS) sont
+# autorisées, et uniquement les méthodes/headers réellement utilisés par le front.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_origins_list,  # origines explicites, jamais "*"
+    allow_credentials=False,  # pas de cookies/session pour l'instant
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # OPTIONS = préflight
+    allow_headers=["Content-Type", "Authorization"],  # JSON + futur token d'auth
 )
 
 app.include_router(experiences.router)
 app.include_router(qr.router)
+app.include_router(assets.router)
 
 
 @app.get("/", tags=["health"])
