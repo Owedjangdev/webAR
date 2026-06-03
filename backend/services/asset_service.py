@@ -57,9 +57,19 @@ def create_asset(db: Session, payload: AssetCreate) -> Asset:
 
 
 def list_for_experience(db: Session, public_id: str) -> list[Asset]:
-    """Liste les assets de niveau expérience d'une expérience (404 si inconnue)."""
+    """Liste les assets qui s'appliquent à une expérience : les siens (niveau
+    expérience) + ceux hérités de son lieu (niveau lieu). 404 si inconnue.
+
+    Dédupliqués par id (un asset n'a qu'un propriétaire, mais on sécurise).
+    """
     experience = _experience_or_404(db, public_id)
-    return list(experience.assets)
+    seen: set[int] = set()
+    assets: list[Asset] = []
+    for asset in (*experience.assets, *experience.place.assets):
+        if asset.id not in seen:
+            seen.add(asset.id)
+            assets.append(asset)
+    return assets
 
 
 def to_out(asset: Asset) -> AssetOut:
