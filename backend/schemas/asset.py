@@ -1,6 +1,8 @@
 """Schémas Pydantic v2 des assets (corps de POST + réponse)."""
 
-from pydantic import BaseModel, HttpUrl, model_validator
+from typing import Annotated
+
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 from models import AssetType
 
@@ -14,8 +16,8 @@ class AssetCreate(BaseModel):
     à l'énumération autorisée (sinon 422).
     """
 
-    experience_id: str | None = None
-    place_id: int | None = None
+    experience_id: Annotated[str, Field(min_length=1)] | None = None
+    place_id: Annotated[int, Field(gt=0)] | None = None
     type: AssetType
     url: HttpUrl
     alt_text: str | None = None
