@@ -19,15 +19,17 @@ Un visiteur scanne un QR code dans un lieu physique → le frontend charge une e
 
 ## 2. État d'avancement actuel
 
-> **⚠️ NOUS SOMMES EN SEMAINE 1 — projet reparti de zéro.**
-> Objectif S1 : mettre en place les bases et obtenir des **environnements fonctionnels et communicants**.
-> - **Frontend** : initialiser le projet React + Vite + Tailwind, structure des dossiers, premier accès caméra via `getUserMedia`, pages de base (chargement expérience, affichage simple, page erreur). Lire `experience_id` depuis l'URL (ex. `/webar?id=exp_001`).
-> - **Backend** : initialiser FastAPI + SQLAlchemy, configurer MySQL, créer les tables de base (`places`, `experiences`, `assets`...), créer une expérience de test (ex. `exp_001`), exposer `GET /api/experiences` et `GET /api/experience/{id}` avec un JSON simple et stable. Configurer CORS.
-> - **Test d'intégration de fin S1** : le frontend appelle `GET /api/experience/exp_001` et affiche les données (nom du lieu, ville, template, message). Vérifier que CORS ne bloque pas.
+> **⚠️ NOUS SOMMES EN SEMAINE 4.** Les bases sont posées et fonctionnelles ; on enrichit le backend et les templates.
 >
-> Jalon S1 : React démarre sur `localhost:5173`, FastAPI sur `localhost:8000`, MySQL connecté, et les deux communiquent.
+> **Fait (S1 → S4) :**
+> - **S1** — Frontend React + Vite + Tailwind v3.4 (pages chargement / expérience / erreur, hook `useCamera`). Backend FastAPI + SQLAlchemy + MySQL, `GET /api/experiences` et `GET /api/experience/{id}`, CORS. Intégration front↔back validée.
+> - **S2** — CRUD expériences (`POST` / `PUT /api/experience`) ; côté frontend, **chargeur de templates dynamique** (registre lisant le champ `template`).
+> - **S3** — Génération de **QR codes** (`POST` / `GET /api/qr/{id}`, table `qr_codes`) ; template **Selfie SouvenirAR** complet (caméra, overlay, capture, recadrage pinch-to-zoom).
+> - **S4** — Gestion des **assets** : asset lié à un **lieu OU une expérience** (cf. section 7), `POST /api/assets` (upsert, un par type) + `GET /api/assets/{id}`, champ `alt_text`, types `overlay/logo/badge/image/audio`. Revue CORS.
 >
-> ⚠️ Le **contrat JSON** (section 6) sera officiellement **figé en semaine 2**. En S1 il reste provisoire mais sert déjà de base d'échange.
+> Jalon courant : React sur `localhost:5173`, FastAPI sur `localhost:8000`, MySQL connecté, les deux communiquent.
+>
+> ✅ Le **contrat JSON** (section 6) est **figé** (depuis la S2) : `assets = {overlay_image, logo}`.
 
 Met à jour cette section au fil de l'avancement.
 
