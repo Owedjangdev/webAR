@@ -10,7 +10,7 @@ from __future__ import annotations
 import enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, Enum, ForeignKey, String
+from sqlalchemy import CheckConstraint, Enum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -40,6 +40,11 @@ class Asset(Base):
             "(place_id IS NULL) <> (experience_id IS NULL)",
             name="ck_asset_exactly_one_owner",
         ),
+        # Un seul asset par type et par propriétaire (overlay/logo... uniques).
+        # Les NULL étant distincts en MySQL, ces index ne gênent pas l'autre
+        # propriétaire (un asset d'expérience a place_id=NULL et inversement).
+        UniqueConstraint("place_id", "type", name="uq_asset_place_type"),
+        UniqueConstraint("experience_id", "type", name="uq_asset_experience_type"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

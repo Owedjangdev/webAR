@@ -20,10 +20,19 @@ def _experience_or_404(db: Session, public_id: str) -> Experience:
 
 
 def create_asset(db: Session, payload: AssetCreate) -> Asset:
-    """Crée un asset rattaché à une expérience OU à un lieu (404 si la cible est inconnue)."""
+    """Ajoute (ou met à jour) l'asset d'un type pour une expérience OU un lieu.
+
+    Un seul asset par type et par propriétaire : si un asset de ce type existe
+    déjà pour cette cible, son URL/alt_text sont mis à jour (upsert). 404 si la
+    cible (expérience/lieu) est inconnue.
+    """
     if payload.experience_id is not None:
         experience = _experience_or_404(db, payload.experience_id)
-        asset = Asset(experience_id=experience.id)
+        asset = db.scalar(
+            select(Asset).where(
+                Asset.experience_id == experience.id, Asset.type == payload.type
+            )
+        ) or Asset(experience_id=experience.id)
     else:
         place = db.get(Place, payload.place_id)
         if place is None:
@@ -31,7 +40,11 @@ def create_asset(db: Session, payload: AssetCreate) -> Asset:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Lieu (place_id={payload.place_id}) introuvable.",
             )
-        asset = Asset(place_id=payload.place_id)
+        asset = db.scalar(
+            select(Asset).where(
+                Asset.place_id == payload.place_id, Asset.type == payload.type
+            )
+        ) or Asset(place_id=payload.place_id)
 
     asset.type = payload.type
     asset.url = str(payload.url)
