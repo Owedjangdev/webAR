@@ -159,7 +159,7 @@ Règles :
 - **places** : `id` PK AI, `name` VARCHAR(255) NOT NULL, `city` VARCHAR(100) NOT NULL, `created_at` DATETIME DEFAULT NOW()
 - **experiences** : `id` PK AI, `place_id` FK→places.id, `template` VARCHAR(50) NOT NULL, `config_json` JSON NOT NULL, `active` TINYINT(1) DEFAULT 1
 - **qr_codes** : `id` PK AI, `experience_id` FK→experiences.id, `url` VARCHAR(500) NOT NULL, `image_path` VARCHAR(500)
-- **assets** : `id` PK AI, `place_id` FK→places.id, `type` ENUM(overlay/logo/badge/audio) NOT NULL, `url` VARCHAR(500) NOT NULL
+- **assets** : `id` PK AI, `place_id` FK→places.id NULL, `experience_id` FK→experiences.id NULL (**exactement un des deux**), `type` ENUM(overlay/logo/badge/image/audio) NOT NULL, `url` VARCHAR(500) NOT NULL, `alt_text` VARCHAR(255) NULL (accessibilité)
 
 **Tables additionnelles (backoffice + gamification, à confirmer) :**
 
@@ -168,6 +168,9 @@ Règles :
 - **anonymous_sessions** : progression visiteur sans compte
 
 > Statut expérience : le cahier des charges utilise `active` (TINYINT). Les diagrammes UML parlent de statuts `draft`/`published`. Harmoniser avec le binôme (ex. colonne `status ENUM('draft','published')`) — décision à acter dans le contrat.
+
+> ✅ **Décision actée (semaine 4 — cahier des charges + diagramme UML conciliés).** Un asset est lié **soit à un LIEU (`place_id`), soit à une EXPÉRIENCE (`experience_id`)** : les deux colonnes existent (nullable), **exactement une** est remplie. Cela respecte **à la fois** le cahier des charges (qui prévoyait `place_id`) **et** l'UML (qui prévoit `experience_id`). Asset de **lieu** = partagé par toutes ses expériences (ex. logo) ; asset d'**expérience** = propre à elle (ex. overlay), **prioritaire** lors de la fusion. Types = `overlay/logo/badge/image/audio` (union : `badge` du cahier + `image` de l'UML) ; champ `alt_text` ajouté (accessibilité, UML).
+> Le **contrat JSON (section 6) reste figé** : `assets = {overlay_image, logo}`. Les types `badge/image/audio` sont gérés via les endpoints `/api/assets` mais **ne remontent pas** dans `GET /api/experience/{id}` tant que le contrat n'est pas étendu **en accord binôme**.
 
 ---
 
@@ -422,3 +425,4 @@ Si une demande conduirait à du code peu clair ou dupliqué, **signale-le et pro
 6. **Refactoriser systématiquement** (section 16) : code propre, lisible, sans duplication, à chaque modification.
 7. **Utiliser les dernières versions stables** des dépendances (section 3), puis les épingler une fois testées. Vérifier la compatibilité navigateur (cible Chrome ≥ 80) avant d'adopter une version majeure.
 8. **Respecter le workflow Git** (section 16) : jamais de commit direct sur `main`, une branche `frontend/*` ou `backend/*` par fonctionnalité, et **rappeler à Épiphane de commit/push/merger** dès qu'une fonctionnalité est terminée.
+9. **Consulter les diagrammes (UML) AVANT de coder une tâche structurante** (modèle, relation entre entités, endpoint). Le **diagramme de classes fait foi sur le design** (entités, attributs, relations). Si le diagramme pertinent n'est pas fourni avec la tâche, **le demander à Épiphane avant de coder**. Objectif : éviter les contradictions design ↔ implémentation (ex. asset lié au lieu vs à l'expérience — tranché en S4 par l'UML : lié à l'expérience). En cas de conflit entre le cahier des charges (section 7) et l'UML, **le signaler et trancher avec le binôme**, puis acter la décision ici.
