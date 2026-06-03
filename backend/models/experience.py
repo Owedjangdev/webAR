@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
 if TYPE_CHECKING:
+    from models.asset import Asset
     from models.place import Place
 
 
@@ -28,3 +29,5 @@ class Experience(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     place: Mapped[Place] = relationship(back_populates="experiences")
+    # Assets propres à cette expérience (overlay/logo/... ; cf. asset.py).
+    assets: Mapped[list[Asset]] = relationship(back_populates="experience")
