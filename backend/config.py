@@ -1,5 +1,6 @@
 """Configuration de l'application, lue depuis l'environnement / le fichier .env."""
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +28,15 @@ class Settings(BaseSettings):
 
     # Affiche les requêtes SQL dans la console (utile en dev, à laisser à false en prod).
     sql_echo: bool = False
+
+    # --- Authentification backoffice (JWT) ---
+    # Clé secrète de signature des jetons (OBLIGATOIRE, lue depuis .env, jamais en dur).
+    # min_length : refuse une clé vide ou trop courte → l'app ne démarre pas avec un
+    # secret faible (sécurité, finding CodeRabbit).
+    jwt_secret: str = Field(min_length=32)
+    # Algorithme de signature et durée de validité du jeton (minutes, strictement > 0).
+    jwt_algorithm: str = "HS256"
+    jwt_expires_minutes: int = Field(default=60, gt=0)
 
     @property
     def cors_origins_list(self) -> list[str]:
