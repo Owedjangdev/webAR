@@ -19,15 +19,16 @@ Un visiteur scanne un QR code dans un lieu physique → le frontend charge une e
 
 ## 2. État d'avancement actuel
 
-> **⚠️ NOUS SOMMES EN SEMAINE 4.** Les bases sont posées et fonctionnelles ; on enrichit le backend et les templates.
+> **⚠️ NOUS SOMMES EN SEMAINE 5.** Les bases sont solides ; on sécurise le backoffice (authentification) et on a finalisé le souvenir frontend.
 >
-> **Fait (S1 → S4) :**
+> **Fait (S1 → S5) :**
 > - **S1** — Frontend React + Vite + Tailwind v3.4 (pages chargement / expérience / erreur, hook `useCamera`). Backend FastAPI + SQLAlchemy + MySQL, `GET /api/experiences` et `GET /api/experience/{id}`, CORS. Intégration front↔back validée.
 > - **S2** — CRUD expériences (`POST` / `PUT /api/experience`) ; côté frontend, **chargeur de templates dynamique** (registre lisant le champ `template`).
 > - **S3** — Génération de **QR codes** (`POST` / `GET /api/qr/{id}`, table `qr_codes`) ; template **Selfie SouvenirAR** complet (caméra, overlay, capture, recadrage pinch-to-zoom).
 > - **S4** — Gestion des **assets** : asset lié à un **lieu OU une expérience** (cf. section 7), `POST /api/assets` (upsert, un par type) + `GET /api/assets/{id}`, champ `alt_text`, types `overlay/logo/badge/image/audio`. Revue CORS.
+> - **S5** — **Authentification backoffice** : modèle `BackOfficeUser` (email, mot de passe **haché bcrypt**, rôle `admin`/`partner`), `POST /api/login` renvoyant un **JWT**, dépendances `get_current_user` / `require_admin`, routes protégées `GET /api/admin/places` & `/api/admin/experiences` (**401** sans jeton, **403** si non-admin) ; `JWT_SECRET` en `.env`. Le rattachement d'un compte *partner* à ses lieux est **reporté** aux semaines suivantes (routes partenaire). Côté frontend : souvenir partageable finalisé (Web Share API + repli téléchargement, écran d'erreur), `CropEditor` retiré (PR #10/#12 mergées).
 >
-> Jalon courant : React sur `localhost:5173`, FastAPI sur `localhost:8000`, MySQL connecté, les deux communiquent.
+> Jalon courant : React sur `localhost:5173`, FastAPI sur `localhost:8000`, MySQL connecté, les deux communiquent ; backoffice protégé par JWT.
 >
 > ✅ Le **contrat JSON** (section 6) est **figé** (depuis la S2) : `assets = {overlay_image, logo}`.
 
@@ -165,7 +166,7 @@ Règles :
 
 **Tables additionnelles (backoffice + gamification, à confirmer) :**
 
-- **backoffice_users** : rôle `admin` ou `partner` (auth backoffice)
+- **backoffice_users** : `id` PK, `email` UNIQUE, `password_hash` (bcrypt), `role` ENUM(`admin`/`partner`), `created_at`. **Implémenté en S5.** Le lien d'un compte `partner` vers ses lieux est **reporté** (décision binôme S5 : on livre d'abord l'auth + les routes admin ; le périmètre partenaire sera modélisé avec les routes `/api/partner/*`).
 - **hunts**, **hunt_steps** : chasse au trésor multi-étapes
 - **anonymous_sessions** : progression visiteur sans compte
 

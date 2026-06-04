@@ -8,3 +8,6 @@ PyMySQL>=1.1             # driver MySQL pour SQLAlchemy
 pydantic-settings>=2.0   # lecture de la config depuis .env
 cryptography             # requis par PyMySQL pour l'auth caching_sha2_password (MySQL 8)
 qrcode[pil]>=8.0         # génération des QR codes PNG (tire Pillow)
+bcrypt>=4.1              # hachage des mots de passe backoffice (auth)
+PyJWT>=2.8               # jetons JWT signés (auth backoffice)
+email-validator          # validation des emails (Pydantic EmailStr)

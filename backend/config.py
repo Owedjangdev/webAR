@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     # Affiche les requêtes SQL dans la console (utile en dev, à laisser à false en prod).
     sql_echo: bool = False
 
+    # --- Authentification backoffice (JWT) ---
+    # Clé secrète de signature des jetons (OBLIGATOIRE, lue depuis .env, jamais en dur).
+    jwt_secret: str
+    # Algorithme de signature et durée de validité du jeton (en minutes).
+    jwt_algorithm: str = "HS256"
+    jwt_expires_minutes: int = 60
+
     @property
     def cors_origins_list(self) -> list[str]:
         """Transforme la chaîne CORS_ORIGINS en liste d'origines nettoyées."""
