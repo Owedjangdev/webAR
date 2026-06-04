@@ -26,7 +26,7 @@ Un visiteur scanne un QR code dans un lieu physique → le frontend charge une e
 > - **S2** — CRUD expériences (`POST` / `PUT /api/experience`) ; côté frontend, **chargeur de templates dynamique** (registre lisant le champ `template`).
 > - **S3** — Génération de **QR codes** (`POST` / `GET /api/qr/{id}`, table `qr_codes`) ; template **Selfie SouvenirAR** complet (caméra, overlay, capture, recadrage pinch-to-zoom).
 > - **S4** — Gestion des **assets** : asset lié à un **lieu OU une expérience** (cf. section 7), `POST /api/assets` (upsert, un par type) + `GET /api/assets/{id}`, champ `alt_text`, types `overlay/logo/badge/image/audio`. Revue CORS.
-> - **S5** — **Authentification backoffice** : modèle `BackOfficeUser` (email, mot de passe **haché bcrypt**, rôle `admin`/`partner`), `POST /api/login` renvoyant un **JWT**, dépendances `get_current_user` / `require_admin`, routes protégées `GET /api/admin/places` & `/api/admin/experiences` (**401** sans jeton, **403** si non-admin) ; `JWT_SECRET` en `.env`. Le rattachement d'un compte *partner* à ses lieux est **reporté** aux semaines suivantes (routes partenaire). Côté frontend : souvenir partageable finalisé (Web Share API + repli téléchargement, écran d'erreur), `CropEditor` retiré (PR #10/#12 mergées).
+> - **S5** — **Authentification backoffice** : modèle `BackOfficeUser` (email, mot de passe **haché bcrypt**, rôle `admin`/`partner`), `POST /api/login` renvoyant un **JWT + le rôle**, dépendances `get_current_user` / `require_admin`, routes protégées `GET /api/admin/places` & `/api/admin/experiences` (**401** sans jeton, **403** si non-admin) ; `JWT_SECRET` en `.env`. Le rattachement d'un compte *partner* à ses lieux est **reporté** aux semaines suivantes (routes partenaire). Côté frontend : souvenir partageable finalisé (Web Share API + repli téléchargement, écran d'erreur), `CropEditor` retiré (PR #10/#12 mergées).
 >
 > Jalon courant : React sur `localhost:5173`, FastAPI sur `localhost:8000`, MySQL connecté, les deux communiquent ; backoffice protégé par JWT.
 >
@@ -192,8 +192,9 @@ Préfixe `/api`. Documentation Swagger obligatoire (testée avant intégration f
 | POST | `/api/places` | Ajoute un lieu | Admin |
 | POST | `/api/assets/upload` | Upload overlay / logo / badge | Admin |
 
-Endpoints additionnels (backoffice/gamification, plan de travail) à intégrer plus tard :
-`POST /api/login`, `GET /api/admin/*`, `GET /api/partner/*` (filtré par `partner_id`), `GET /api/hunt/{experience_id}`, `POST /api/hunt/step/validate`.
+Endpoints backoffice **implémentés en S5** : `POST /api/login` (renvoie **JWT + rôle**), `GET /api/admin/places`, `GET /api/admin/experiences` (réservés admin — **401** sans jeton, **403** si non-admin).
+
+Endpoints additionnels (à intégrer plus tard) : `GET /api/partner/*` (filtré par `partner_id`), `GET /api/hunt/{experience_id}`, `POST /api/hunt/step/validate`.
 
 ---
 
