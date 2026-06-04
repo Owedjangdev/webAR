@@ -19,7 +19,16 @@ export default function ErrorScreen({
   tip = DEFAULT_TIP,
   onRetry,
 }) {
-  const handleRetry = onRetry ?? (() => window.location.reload())
+  const handleRetry =
+    onRetry ??
+    (() => {
+      // Pas d'appelant avec onRetry : on évite de recharger la même URL en échec.
+      if (window.history.length > 1) {
+        window.history.back()
+        return
+      }
+      window.location.assign('/webar')
+    })
 
   return (
     <main className="relative flex min-h-screen flex-col bg-gradient-to-b from-white to-slate-100">
