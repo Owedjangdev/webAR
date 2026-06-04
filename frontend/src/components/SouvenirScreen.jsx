@@ -35,6 +35,7 @@ export default function SouvenirScreen({ image, place, config, onRetake }) {
       })
       if (result === 'shared') setNotice('Souvenir partagé')
       else if (result === 'downloaded') setNotice('Partage indisponible — souvenir téléchargé')
+      else setNotice(null) // partage annulé : on n'affiche pas un ancien message
     } finally {
       setSharing(false)
     }
