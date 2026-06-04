@@ -6,6 +6,32 @@ import { useCallback, useRef } from 'react'
 const MAX_CAPTURE_DIMENSION = 1280
 
 /**
+ * Dessine le logo du lieu en badge circulaire, en haut à gauche de l'image.
+ */
+function drawLogo(ctx, canvas, logo) {
+  const size = Math.round(canvas.width * 0.13)
+  const margin = Math.round(canvas.width * 0.04)
+  const cx = margin + size / 2
+  const cy = margin + size / 2
+
+  ctx.save()
+  // Pastille blanche de fond (lisibilité par-dessus la vidéo).
+  ctx.beginPath()
+  ctx.arc(cx, cy, size / 2, 0, Math.PI * 2)
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+  ctx.fill()
+  // Clip circulaire puis logo en "cover".
+  ctx.beginPath()
+  ctx.arc(cx, cy, size / 2 - 2, 0, Math.PI * 2)
+  ctx.clip()
+  const ratio = Math.max(size / logo.naturalWidth, size / logo.naturalHeight)
+  const w = logo.naturalWidth * ratio
+  const h = logo.naturalHeight * ratio
+  ctx.drawImage(logo, cx - w / 2, cy - h / 2, w, h)
+  ctx.restore()
+}
+
+/**
  * Dessine une légende (message souvenir) lisible en bas de l'image capturée.
  */
 function drawCaption(ctx, canvas, text) {
@@ -39,7 +65,7 @@ function drawCaption(ctx, canvas, text) {
 export function useCanvas() {
   const canvasRef = useRef(null)
 
-  const capture = useCallback((video, { overlay, message, mirror = false } = {}) => {
+  const capture = useCallback((video, { overlay, logo, message, mirror = false } = {}) => {
     if (!video?.videoWidth) {
       return null
     }
@@ -64,6 +90,11 @@ export function useCanvas() {
     // Overlay décoratif (seulement s'il est bien chargé).
     if (overlay?.complete && overlay.naturalWidth > 0) {
       ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height)
+    }
+
+    // Logo du lieu (badge), seulement s'il est bien chargé.
+    if (logo?.complete && logo.naturalWidth > 0) {
+      drawLogo(ctx, canvas, logo)
     }
 
     if (message) {
