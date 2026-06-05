@@ -170,7 +170,7 @@ Règles :
 - **hunts**, **hunt_steps** : chasse au trésor multi-étapes
 - **anonymous_sessions** : progression visiteur sans compte
 
-> ✅ **Décision actée (S5).** L'ancien `active` (TINYINT) est **remplacé** par `status ENUM('draft','published')` (l'UML fait foi). Migration : `backend/migrations/2026-06-05_experience_status.sql` (active=1 → `published`, active=0 → `draft`). Une expérience est **créée en `draft`**, publiée via `PUT /api/admin/experiences/{id}/publish` ; le **visiteur ne charge que les `published`** (un `draft` répond **404** « non disponible »).
+> ✅ **Décision actée (S5).** L'ancien `active` (TINYINT) est **remplacé** par `status ENUM('draft','published')` (l'UML fait foi). Migration : `backend/migrations/2026-06-05_experience_status.sql` (active=1 → `published`, active=0 → `draft`). Une expérience est **créée en `draft`**, publiée via `PUT /api/admin/experiences/{public_id}/publish` ; le **visiteur ne charge que les `published`** (un `draft` répond **404** « non disponible »).
 
 > ✅ **Décision actée (semaine 4 — cahier des charges + diagramme UML conciliés).** Un asset est lié **soit à un LIEU (`place_id`), soit à une EXPÉRIENCE (`experience_id`)** : les deux colonnes existent (nullable), **exactement une** est remplie. Cela respecte **à la fois** le cahier des charges (qui prévoyait `place_id`) **et** l'UML (qui prévoit `experience_id`). Asset de **lieu** = partagé par toutes ses expériences (ex. logo) ; asset d'**expérience** = propre à elle (ex. overlay), **prioritaire** lors de la fusion. Types = `overlay/logo/badge/image/audio` (union : `badge` du cahier + `image` de l'UML) ; champ `alt_text` ajouté (accessibilité, UML).
 > Le **contrat JSON (section 6) reste figé** : `assets = {overlay_image, logo}`. Les types `badge/image/audio` sont gérés via les endpoints `/api/assets` mais **ne remontent pas** dans `GET /api/experience/{id}` tant que le contrat n'est pas étendu **en accord binôme**.
@@ -192,7 +192,7 @@ Préfixe `/api`. Documentation Swagger obligatoire (testée avant intégration f
 | POST | `/api/places` | Ajoute un lieu | Admin |
 | POST | `/api/assets/upload` | Upload overlay / logo / badge | Admin |
 
-Endpoints backoffice **implémentés en S5** (réservés admin — **401** sans jeton, **403** si non-admin) : `POST /api/login` (renvoie **JWT + rôle**), `GET /api/admin/places`, `GET /api/admin/experiences`, `POST /api/admin/places`, `POST /api/admin/experiences` (créée en **draft**), `PUT /api/admin/experiences/{id}/publish` & `…/unpublish`.
+Endpoints backoffice **implémentés en S5** (réservés admin — **401** sans jeton, **403** si non-admin) : `POST /api/login` (renvoie **JWT + rôle**), `GET /api/admin/places`, `GET /api/admin/experiences`, `POST /api/admin/places`, `POST /api/admin/experiences` (créée en **draft**), `PUT /api/admin/experiences/{public_id}/publish` & `…/unpublish`.
 
 Endpoints additionnels (à intégrer plus tard) : `GET /api/partner/*` (filtré par `partner_id`), `GET /api/hunt/{experience_id}`, `POST /api/hunt/step/validate`.
 
