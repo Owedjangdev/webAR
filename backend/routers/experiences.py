@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Experience
+from models import Experience, ExperienceStatus
 from schemas.experience import (
     ExperienceCreate,
     ExperienceDetail,
@@ -18,10 +18,10 @@ router = APIRouter(prefix="/api", tags=["experiences"])
 
 
 @router.get("/experiences", response_model=list[ExperienceSummary])
-def list_active_experiences(db: Session = Depends(get_db)) -> list[ExperienceSummary]:
-    """Liste les expériences actives (active = True)."""
+def list_published_experiences(db: Session = Depends(get_db)) -> list[ExperienceSummary]:
+    """Liste les expériences publiées (seules visibles du visiteur)."""
     experiences = db.scalars(
-        select(Experience).where(Experience.active.is_(True))
+        select(Experience).where(Experience.status == ExperienceStatus.published)
     ).all()
     return [experience_service.to_summary(exp) for exp in experiences]
 
@@ -39,6 +39,13 @@ def get_experience(experience_id: str, db: Session = Depends(get_db)) -> Experie
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Expérience '{experience_id}' introuvable.",
+        )
+    # Un visiteur ne peut pas charger une expérience en brouillon : on répond 404
+    # (on ne révèle pas son existence tant qu'elle n'est pas publiée).
+    if experience.status != ExperienceStatus.published:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cette expérience n'est pas disponible.",
         )
     return experience_service.to_detail(experience)
 

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, Boolean, ForeignKey, String
+from sqlalchemy import JSON, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -12,6 +13,17 @@ from database import Base
 if TYPE_CHECKING:
     from models.asset import Asset
     from models.place import Place
+
+
+class ExperienceStatus(str, enum.Enum):
+    """Statut de publication d'une expérience (UML : remplace l'ancien `active`).
+
+    Une expérience est créée en `draft` (invisible au visiteur) puis `published`
+    (chargeable par le visiteur). Cf. CLAUDE.md section 7.
+    """
+
+    draft = "draft"
+    published = "published"
 
 
 class Experience(Base):
@@ -26,7 +38,10 @@ class Experience(Base):
     place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
     template: Mapped[str] = mapped_column(String(50), nullable=False)
     config_json: Mapped[dict] = mapped_column(JSON, nullable=False)
-    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Statut de publication (remplace `active` : draft par défaut, cf. ExperienceStatus).
+    status: Mapped[ExperienceStatus] = mapped_column(
+        Enum(ExperienceStatus), nullable=False, default=ExperienceStatus.draft
+    )
 
     place: Mapped[Place] = relationship(back_populates="experiences")
     # Assets propres à cette expérience (overlay/logo/... ; cf. asset.py).
