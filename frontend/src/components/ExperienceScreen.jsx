@@ -14,7 +14,15 @@ import { resolveTemplate } from '../templates/registry.js'
  * `<Variable />` dont le type provient d'un appel de fonction.
  */
 export default function ExperienceScreen({ experience }) {
-  const { template, place, assets, config } = experience
+  const { experience_id, template, place, assets, config } = experience
 
-  return createElement(resolveTemplate(template), { template, place, assets, config })
+  // experience_id est exposé en `experienceId` : certains templates (ex. Badge)
+  // en ont besoin comme clé de persistance (localStorage). Les autres l'ignorent.
+  return createElement(resolveTemplate(template), {
+    experienceId: experience_id,
+    template,
+    place,
+    assets,
+    config,
+  })
 }

@@ -1,5 +1,7 @@
 import { useCallback, useRef } from 'react'
 
+import { toPngDataUrl } from '../lib/canvas.js'
+
 // Borne la résolution de l'image exportée : l'encodage toDataURL coûte avec le
 // nombre de pixels. Plafonner le grand côté garde la capture rapide (<= 2 s,
 // CLAUDE.md section 12) tout en restant net pour un souvenir.
@@ -101,13 +103,9 @@ export function useCanvas() {
       drawCaption(ctx, canvas, message)
     }
 
-    try {
-      return canvas.toDataURL('image/png')
-    } catch {
-      // toDataURL échoue si un asset cross-origin sans en-tête CORS a "tainté"
-      // le canvas. On renvoie null : l'appelant affiche un fallback clair.
-      return null
-    }
+    // Export PNG (null si le canvas a été tainté par un asset cross-origin
+    // sans CORS — garde factorisée dans lib/canvas).
+    return toPngDataUrl(canvas)
   }, [])
 
   return { capture }
