@@ -160,7 +160,7 @@ Règles :
 **Tables de base (cahier des charges) :**
 
 - **places** : `id` PK AI, `name` VARCHAR(255) NOT NULL, `city` VARCHAR(100) NOT NULL, `created_at` DATETIME DEFAULT NOW()
-- **experiences** : `id` PK AI, `place_id` FK→places.id, `template` VARCHAR(50) NOT NULL, `config_json` JSON NOT NULL, `active` TINYINT(1) DEFAULT 1
+- **experiences** : `id` PK AI, `public_id` VARCHAR(50) UNIQUE (ex. "exp_001"), `place_id` FK→places.id, `template` VARCHAR(50) NOT NULL, `config_json` JSON NOT NULL, `status` ENUM('draft','published') NOT NULL DEFAULT 'draft'
 - **qr_codes** : `id` PK AI, `experience_id` FK→experiences.id, `url` VARCHAR(500) NOT NULL, `image_path` VARCHAR(500)
 - **assets** : `id` PK AI, `place_id` FK→places.id NULL, `experience_id` FK→experiences.id NULL (**exactement un des deux**), `type` ENUM(overlay/logo/badge/image/audio) NOT NULL, `url` VARCHAR(500) NOT NULL, `alt_text` VARCHAR(255) NULL (accessibilité)
 
@@ -170,7 +170,7 @@ Règles :
 - **hunts**, **hunt_steps** : chasse au trésor multi-étapes
 - **anonymous_sessions** : progression visiteur sans compte
 
-> Statut expérience : le cahier des charges utilise `active` (TINYINT). Les diagrammes UML parlent de statuts `draft`/`published`. Harmoniser avec le binôme (ex. colonne `status ENUM('draft','published')`) — décision à acter dans le contrat.
+> ✅ **Décision actée (S5).** L'ancien `active` (TINYINT) est **remplacé** par `status ENUM('draft','published')` (l'UML fait foi). Migration : `backend/migrations/2026-06-05_experience_status.sql` (active=1 → `published`, active=0 → `draft`). Une expérience est **créée en `draft`**, publiée via `PUT /api/admin/experiences/{id}/publish` ; le **visiteur ne charge que les `published`** (un `draft` répond **404** « non disponible »).
 
 > ✅ **Décision actée (semaine 4 — cahier des charges + diagramme UML conciliés).** Un asset est lié **soit à un LIEU (`place_id`), soit à une EXPÉRIENCE (`experience_id`)** : les deux colonnes existent (nullable), **exactement une** est remplie. Cela respecte **à la fois** le cahier des charges (qui prévoyait `place_id`) **et** l'UML (qui prévoit `experience_id`). Asset de **lieu** = partagé par toutes ses expériences (ex. logo) ; asset d'**expérience** = propre à elle (ex. overlay), **prioritaire** lors de la fusion. Types = `overlay/logo/badge/image/audio` (union : `badge` du cahier + `image` de l'UML) ; champ `alt_text` ajouté (accessibilité, UML).
 > Le **contrat JSON (section 6) reste figé** : `assets = {overlay_image, logo}`. Les types `badge/image/audio` sont gérés via les endpoints `/api/assets` mais **ne remontent pas** dans `GET /api/experience/{id}` tant que le contrat n'est pas étendu **en accord binôme**.
@@ -192,7 +192,7 @@ Préfixe `/api`. Documentation Swagger obligatoire (testée avant intégration f
 | POST | `/api/places` | Ajoute un lieu | Admin |
 | POST | `/api/assets/upload` | Upload overlay / logo / badge | Admin |
 
-Endpoints backoffice **implémentés en S5** : `POST /api/login` (renvoie **JWT + rôle**), `GET /api/admin/places`, `GET /api/admin/experiences` (réservés admin — **401** sans jeton, **403** si non-admin).
+Endpoints backoffice **implémentés en S5** (réservés admin — **401** sans jeton, **403** si non-admin) : `POST /api/login` (renvoie **JWT + rôle**), `GET /api/admin/places`, `GET /api/admin/experiences`, `POST /api/admin/places`, `POST /api/admin/experiences` (créée en **draft**), `PUT /api/admin/experiences/{id}/publish` & `…/unpublish`.
 
 Endpoints additionnels (à intégrer plus tard) : `GET /api/partner/*` (filtré par `partner_id`), `GET /api/hunt/{experience_id}`, `POST /api/hunt/step/validate`.
 

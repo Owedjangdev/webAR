@@ -6,6 +6,8 @@ Ne pas modifier sa structure sans accord écrit du binôme (contrat figé en S2)
 
 from pydantic import BaseModel, model_validator
 
+from models import ExperienceStatus
+
 
 class PlaceOut(BaseModel):
     """Lieu tel qu'exposé dans le contrat JSON : { "name", "city" }."""
@@ -49,7 +51,8 @@ class ExperienceCreate(BaseModel):
     place: PlaceIn | None = None
     assets: ExperienceAssets = ExperienceAssets()
     config: dict = {}
-    active: bool = True
+    # Pas de statut ici : une expérience est toujours créée en `draft` (cf.
+    # experience_service.create_experience) puis publiée via /publish.
 
     @model_validator(mode="after")
     def _check_place(self) -> "ExperienceCreate":
@@ -70,7 +73,8 @@ class ExperienceUpdate(BaseModel):
     template: str | None = None
     config: dict | None = None
     assets: ExperienceAssets | None = None
-    active: bool | None = None
+    # Le statut (draft/published) ne se change pas ici : routes dédiées
+    # /api/admin/experiences/{id}/publish et /unpublish.
 
 
 class ExperienceDetail(BaseModel):
@@ -92,4 +96,4 @@ class ExperienceSummary(BaseModel):
     experience_id: str
     template: str
     place: PlaceOut
-    active: bool
+    status: ExperienceStatus

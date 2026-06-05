@@ -14,7 +14,7 @@ n'est pas recréé. Relancer le script ne crée donc pas de doublon.
 from sqlalchemy import select
 
 from database import Base, SessionLocal, engine
-from models import Asset, AssetType, Experience, Place
+from models import Asset, AssetType, Experience, ExperienceStatus, Place
 
 _CDN = "https://cdn.example.com"
 
@@ -110,7 +110,8 @@ def _create_missing_experiences(db, places: dict[str, Place]) -> int:
                 public_id=exp["public_id"],
                 template=exp["template"],
                 config_json=exp["config"],
-                active=True,
+                # Données de démo : publiées d'emblée pour rester visibles au visiteur.
+                status=ExperienceStatus.published,
                 place=places[exp["place"]],
             )
         )

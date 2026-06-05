@@ -16,7 +16,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from models import Asset, AssetType, Experience, Place
+from models import Asset, AssetType, Experience, ExperienceStatus, Place
 from schemas.experience import (
     ExperienceAssets,
     ExperienceCreate,
@@ -79,7 +79,7 @@ def to_summary(experience: Experience) -> ExperienceSummary:
         experience_id=experience.public_id,
         template=experience.template,
         place=_place_out(experience),
-        active=experience.active,
+        status=experience.status,
     )
 
 
@@ -168,7 +168,9 @@ def create_experience(db: Session, payload: ExperienceCreate) -> Experience:
         public_id=public_id,
         template=payload.template,
         config_json=payload.config,
-        active=payload.active,
+        # Règle métier : une expérience est TOUJOURS créée en brouillon, puis
+        # publiée explicitement via set_status (route /publish).
+        status=ExperienceStatus.draft,
         place=place,
     )
     _apply_assets(experience, payload.assets)
@@ -189,11 +191,22 @@ def update_experience(
         experience.template = payload.template
     if payload.config is not None:
         experience.config_json = payload.config
-    if payload.active is not None:
-        experience.active = payload.active
     if payload.assets is not None:
         _apply_assets(experience, payload.assets)
 
+    db.commit()
+    db.refresh(experience)
+    return experience
+
+
+def set_status(db: Session, public_id: str, new_status: ExperienceStatus) -> Experience:
+    """Change le statut d'une expérience (publier / dépublier).
+
+    404 si l'expérience n'existe pas. Utilisé par les routes admin /publish et
+    /unpublish.
+    """
+    experience = _get_or_404(db, public_id)
+    experience.status = new_status
     db.commit()
     db.refresh(experience)
     return experience
