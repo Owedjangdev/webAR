@@ -17,15 +17,37 @@ export default {
           700: '#1d4ed8',
         },
       },
-      // Animation "égaliseur" des barres de chargement.
+      // Animations (transform/opacity uniquement → GPU, fluides sur mobile faible).
       keyframes: {
+        // Égaliseur des barres de chargement.
         equalize: {
           '0%, 100%': { transform: 'scaleY(0.35)' },
           '50%': { transform: 'scaleY(1)' },
         },
+        // Déblocage du badge : apparition avec léger rebond.
+        'badge-pop': {
+          '0%': { transform: 'scale(0.6)', opacity: '0' },
+          '60%': { transform: 'scale(1.08)', opacity: '1' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        // Halo doré qui éclate une fois puis s'estompe (pas d'animation infinie).
+        'badge-burst': {
+          '0%': { transform: 'scale(0.7)', opacity: '0' },
+          '40%': { transform: 'scale(1.25)', opacity: '0.7' },
+          '100%': { transform: 'scale(1.4)', opacity: '0' },
+        },
+        // Texte/éléments qui montent en fondu.
+        'rise-in': {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
       },
       animation: {
         equalize: 'equalize 1s ease-in-out infinite',
+        // 'both' garde l'état final ; courbe à rebond pour le pop.
+        'badge-pop': 'badge-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+        'badge-burst': 'badge-burst 1.1s ease-out both',
+        'rise-in': 'rise-in 0.5s ease-out 0.15s both',
       },
     },
   },
