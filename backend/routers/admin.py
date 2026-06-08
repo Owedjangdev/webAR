@@ -158,19 +158,27 @@ async def upload_asset(
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     suffix = Path(file.filename or "").suffix.lower()
     filename = f"{uuid.uuid4().hex}{suffix}"
-    (UPLOAD_DIR / filename).write_bytes(content)
+    file_path = UPLOAD_DIR / filename
+    file_path.write_bytes(content)
 
     # URL absolue servie par le backend (ex. http://localhost:8000/static/uploads/x.png).
     url = f"{str(request.base_url).rstrip('/')}/static/uploads/{filename}"
 
-    asset = asset_service.create_asset(
-        db,
-        AssetCreate(
-            experience_id=experience_id,
-            place_id=place_id,
-            type=type,
-            url=url,
-            alt_text=alt_text,
-        ),
-    )
+    # Si la création de l'asset échoue (404 lieu/expérience, 422, erreur BDD),
+    # on supprime le fichier déjà écrit pour ne pas laisser d'orphelin sur disque.
+    try:
+        asset = asset_service.create_asset(
+            db,
+            AssetCreate(
+                experience_id=experience_id,
+                place_id=place_id,
+                type=type,
+                url=url,
+                alt_text=alt_text,
+            ),
+        )
+    except Exception:
+        file_path.unlink(missing_ok=True)
+        raise
+
     return asset_service.to_out(asset)

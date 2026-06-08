@@ -95,7 +95,7 @@ git branch -M main
 git add .
 git commit -m "chore: initialisation du monorepo WebAR + CLAUDE.md"
 # 5. Connecter le distant et pousser
-git remote add originhttps://github.com/Owedjangdev/webAR/
+git remote add origin https://github.com/Owedjangdev/webAR/
 git push -u origin main
 # 6. Ensuite : plus JAMAIS de commit direct sur main
 ```
