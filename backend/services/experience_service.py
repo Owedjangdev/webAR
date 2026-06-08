@@ -13,10 +13,10 @@ mince et centralise les messages d'erreur clairs exigés par les conventions.
 import re
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from models import Asset, AssetType, Experience, ExperienceStatus, Place
+from models import Asset, AssetType, Experience, ExperienceStatus, Place, QrCode
 from schemas.experience import (
     ExperienceAssets,
     ExperienceCreate,
@@ -210,3 +210,21 @@ def set_status(db: Session, public_id: str, new_status: ExperienceStatus) -> Exp
     db.commit()
     db.refresh(experience)
     return experience
+
+
+def get_or_404(db: Session, public_id: str) -> Experience:
+    """Retourne l'expérience d'identifiant public donné, ou 404 (usage admin)."""
+    return _get_or_404(db, public_id)
+
+
+def delete_experience(db: Session, public_id: str) -> None:
+    """Supprime une expérience et ses dépendances (assets, QR code). 404 si inconnue.
+
+    On retire d'abord les lignes liées (clés étrangères) pour éviter une erreur
+    d'intégrité, puis l'expérience elle-même.
+    """
+    experience = _get_or_404(db, public_id)
+    db.execute(delete(Asset).where(Asset.experience_id == experience.id))
+    db.execute(delete(QrCode).where(QrCode.experience_id == experience.id))
+    db.delete(experience)
+    db.commit()
