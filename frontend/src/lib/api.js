@@ -1,7 +1,7 @@
 // Client API du backend WebAR.
 // L'URL de base est surchargeable via VITE_API_BASE_URL (déploiement),
 // sinon on vise le backend FastAPI local sur le port 8000.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
 /**
  * Récupère le contrat JSON complet d'une expérience (cf. CLAUDE.md section 6).
