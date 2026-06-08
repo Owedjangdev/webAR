@@ -13,7 +13,7 @@ n'est pas recréé. Relancer le script ne crée donc pas de doublon.
 
 from sqlalchemy import select
 
-from database import Base, SessionLocal, engine
+from database import SessionLocal
 from models import Asset, AssetType, Experience, ExperienceStatus, Place
 
 _CDN = "https://cdn.example.com"
@@ -120,9 +120,11 @@ def _create_missing_experiences(db, places: dict[str, Place]) -> int:
 
 
 def seed() -> None:
-    """Crée les tables si besoin puis insère les données de test manquantes."""
-    Base.metadata.create_all(bind=engine)
+    """Insère les données de test manquantes.
 
+    Prérequis : le schéma doit déjà exister (lancer `alembic upgrade head`
+    avant ce script — c'est Alembic qui gère les tables, plus create_all).
+    """
     with SessionLocal() as db:
         places = _get_or_create_places(db)
         created = _create_missing_experiences(db, places)

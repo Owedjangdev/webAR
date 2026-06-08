@@ -15,15 +15,13 @@ import sys
 
 from sqlalchemy import select
 
-import models  # noqa: F401  (enregistre les modèles sur Base.metadata)
-from database import Base, SessionLocal, engine
+from database import SessionLocal
 from models import BackOfficeUser, UserRole
 from security import hash_password
 
 
 def main() -> None:
-    # S'assure que la table backoffice_users existe (utile au premier lancement).
-    Base.metadata.create_all(bind=engine)
+    # Prérequis : schéma déjà migré (`alembic upgrade head`) — plus de create_all.
 
     email = sys.argv[1] if len(sys.argv) > 1 else input("Email admin : ").strip()
     password = getpass.getpass("Mot de passe : ")

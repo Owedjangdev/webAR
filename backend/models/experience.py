@@ -40,7 +40,10 @@ class Experience(Base):
     config_json: Mapped[dict] = mapped_column(JSON, nullable=False)
     # Statut de publication (remplace `active` : draft par défaut, cf. ExperienceStatus).
     status: Mapped[ExperienceStatus] = mapped_column(
-        Enum(ExperienceStatus), nullable=False, default=ExperienceStatus.draft
+        Enum(ExperienceStatus),
+        nullable=False,
+        default=ExperienceStatus.draft,  # défaut côté Python (ORM)
+        server_default=ExperienceStatus.draft.value,  # défaut côté base (DEFAULT 'draft')
     )
 
     place: Mapped[Place] = relationship(back_populates="experiences")

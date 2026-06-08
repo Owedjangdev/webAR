@@ -2,18 +2,15 @@
 
 from pathlib import Path
 
-import models  # noqa: F401  (enregistre les modèles sur Base.metadata)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from config import settings
-from database import Base, engine
 from routers import admin, assets, auth, experiences, qr
 
-# Crée les tables manquantes au démarrage (pratique en dev S1).
-# En production, le schéma sera géré par Alembic (cf. CLAUDE.md section 3).
-Base.metadata.create_all(bind=engine)
+# Le schéma de base est géré par Alembic (plus de create_all au démarrage) :
+# appliquer les migrations avec `alembic upgrade head` avant de lancer l'API.
 
 app = FastAPI(
     title="WebAR API",
