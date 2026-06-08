@@ -1,10 +1,6 @@
 import { createContext, useCallback, useContext, useState } from 'react'
 import { CheckCircle2, Info, TriangleAlert, X } from 'lucide-react'
 
-// Système de notifications « toast » du backoffice.
-// Usage : const toast = useToast(); toast.success('Lieu créé avec succès').
-// Les toasts apparaissent en haut, s'empilent et disparaissent automatiquement.
-
 const ToastContext = createContext(null)
 const AUTO_DISMISS_MS = 3500
 let nextId = 0
@@ -48,21 +44,21 @@ export function useToast() {
 }
 
 const STYLES = {
-  success: { icon: CheckCircle2, ring: 'ring-emerald-200', iconClass: 'text-emerald-500' },
-  error: { icon: TriangleAlert, ring: 'ring-red-200', iconClass: 'text-red-500' },
-  info: { icon: Info, ring: 'ring-brand-200', iconClass: 'text-brand-500' },
+  success: { icon: CheckCircle2, border: 'border-emerald-200', iconClass: 'text-emerald-500' },
+  error: { icon: TriangleAlert, border: 'border-red-200', iconClass: 'text-red-500' },
+  info: { icon: Info, border: 'border-brand-200', iconClass: 'text-brand-500' },
 }
 
 function ToastViewport({ toasts, onClose }) {
   return (
     <div className="pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col items-end gap-2">
       {toasts.map(({ id, type, message }) => {
-        const { icon: Icon, ring, iconClass } = STYLES[type] ?? STYLES.info
+        const { icon: Icon, border, iconClass } = STYLES[type] ?? STYLES.info
         return (
           <div
             key={id}
             role="status"
-            className={`pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-lg ring-1 ${ring} motion-safe:animate-rise-in`}
+            className={`pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl border bg-white px-4 py-3.5 text-sm font-medium text-slate-700 shadow-lg ${border} motion-safe:animate-rise-in`}
           >
             <Icon className={`h-5 w-5 shrink-0 ${iconClass}`} />
             <span className="flex-1">{message}</span>

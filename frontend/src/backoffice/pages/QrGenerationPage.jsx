@@ -11,15 +11,10 @@ import { useApiResource } from '../hooks/useApiResource.js'
 
 const fetchExperiences = () => apiGet('/api/admin/experiences')
 
-/**
- * Page Génération QR : on choisit une expérience, le QR est (re)généré
- * (POST /api/qr/{id}), on voit son URL publique + l'aperçu PNG (GET /api/qr/{id})
- * et on le télécharge à imprimer. Inspiré de la maquette « Génération QR ».
- */
 export default function QrGenerationPage() {
   const { data, loading, error } = useApiResource(fetchExperiences)
   const [selected, setSelected] = useState('')
-  const [qr, setQr] = useState(null) // { experience_id, url, image_url }
+  const [qr, setQr] = useState(null)
   const [genError, setGenError] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [imgVersion, setImgVersion] = useState(0)
@@ -31,7 +26,7 @@ export default function QrGenerationPage() {
     try {
       const result = await apiPost(`/api/qr/${experienceId}`)
       setQr(result)
-      setImgVersion((v) => v + 1) // force le rechargement de l'image
+      setImgVersion((v) => v + 1)
     } catch (err) {
       setGenError(err.message)
       setQr(null)
@@ -74,9 +69,8 @@ export default function QrGenerationPage() {
           </EmptyState>
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Configuration */}
-            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
-              <h2 className="mb-4 text-lg font-bold text-slate-800">Configuration</h2>
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-base font-bold text-slate-800">Configuration</h2>
               <FormField label="Sélectionner une expérience" htmlFor="qr-exp">
                 <select
                   id="qr-exp"
@@ -110,9 +104,9 @@ export default function QrGenerationPage() {
                     </div>
                   </FormField>
 
-                  <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                    <CheckCircle2 className="h-5 w-5 shrink-0" />
-                    <span className="font-medium">Statut : prêt à imprimer</span>
+                  <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                    Statut : prêt à imprimer
                   </div>
 
                   <div className="flex flex-wrap gap-3">
@@ -120,7 +114,7 @@ export default function QrGenerationPage() {
                       href={`${API_BASE_URL}/api/qr/${selected}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:brightness-110"
+                      className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/30 hover:brightness-110"
                     >
                       <Download className="h-5 w-5" />
                       Télécharger PNG
@@ -133,18 +127,20 @@ export default function QrGenerationPage() {
               )}
             </div>
 
-            {/* Aperçu */}
-            <div className="flex items-center justify-center rounded-2xl bg-slate-100 p-6 ring-1 ring-slate-100">
+            <div className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 to-slate-100 p-8">
               {generating && <Loader label="Génération…" />}
               {!generating && imgSrc && (
-                <div className="rounded-3xl bg-white p-6 text-center shadow-lg ring-1 ring-slate-200">
+                <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-lg">
                   <img src={imgSrc} alt={`QR code de ${selected}`} className="mx-auto h-56 w-56" />
-                  <p className="mt-4 font-semibold text-slate-800">Scannez pour explorer</p>
-                  <p className="text-sm text-slate-500">{selected}</p>
+                  <p className="mt-5 font-semibold text-slate-800">Scannez pour explorer</p>
+                  <p className="mt-0.5 text-sm text-slate-400">{selected}</p>
                 </div>
               )}
               {!generating && !imgSrc && (
-                <p className="text-sm text-slate-400">Sélectionne une expérience pour voir son QR.</p>
+                <div className="text-center">
+                  <QrCode className="mx-auto h-12 w-12 text-slate-300" />
+                  <p className="mt-3 text-sm text-slate-400">Sélectionne une expérience pour voir son QR.</p>
+                </div>
               )}
             </div>
           </div>

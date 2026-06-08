@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Loader2, LogIn } from 'lucide-react'
+import { Landmark, Loader2, LogIn } from 'lucide-react'
 
 import { login } from '../../lib/apiClient.js'
 import { getRole, isAuthenticated, saveSession } from '../../lib/auth.js'
-import FormField, { CONTROL_CLASS } from '../components/FormField.jsx'
 
-/**
- * Page de connexion du backoffice (POST /api/login).
- * Succès admin -> dashboard ; partner -> message (espace prévu en S7) ;
- * échec -> « Identifiants invalides ».
- */
+const INPUT_CLASS =
+  'w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white ' +
+  'outline-none transition placeholder:text-slate-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 ' +
+  'disabled:cursor-not-allowed disabled:opacity-50'
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -18,7 +17,6 @@ export default function LoginPage() {
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
-  // Déjà connecté en admin : inutile de réafficher le login.
   if (isAuthenticated() && getRole() === 'admin') {
     return <Navigate to="/admin/dashboard" replace />
   }
@@ -30,7 +28,6 @@ export default function LoginPage() {
     try {
       const { access_token, role } = await login(email, password)
       if (role !== 'admin') {
-        // Aiguillage par rôle : l'espace partenaire arrive en S7 (non codé ici).
         setError("L'espace partenaire n'est pas encore disponible (prévu semaine 7).")
         return
       }
@@ -44,53 +41,68 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 via-white to-slate-100 p-4">
-      <div className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-xl ring-1 ring-slate-100">
-        <div className="mb-6 text-center">
-          <p className="text-xl font-bold text-brand-600">Landmark Backoffice</p>
-          <p className="mt-1 text-sm text-slate-500">Connecte-toi à ton espace administrateur</p>
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-brand-900 p-4">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-600/10 via-transparent to-transparent" />
+
+      <div className="relative w-full max-w-sm">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl shadow-black/40 backdrop-blur-xl">
+          <div className="mb-8 text-center">
+            <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/30">
+              <Landmark className="h-7 w-7" />
+            </span>
+            <h1 className="text-xl font-bold text-white">Landmark</h1>
+            <p className="mt-1 text-sm text-slate-400">Connecte-toi à ton espace administrateur</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={INPUT_CLASS}
+                placeholder="admin@webar.bj"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-300">
+                Mot de passe
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={INPUT_CLASS}
+                placeholder="••••••••"
+              />
+            </div>
+
+            {error && (
+              <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-400">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-3 font-semibold text-white shadow-lg shadow-brand-600/25 outline-none transition-all duration-200 hover:shadow-brand-500/40 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-brand-400 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
+              {submitting ? 'Connexion…' : 'Se connecter'}
+            </button>
+          </form>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          <FormField label="Email" htmlFor="email">
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={CONTROL_CLASS}
-              placeholder="admin@webar.bj"
-            />
-          </FormField>
-
-          <FormField label="Mot de passe" htmlFor="password">
-            <input
-              id="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={CONTROL_CLASS}
-              placeholder="••••••••"
-            />
-          </FormField>
-
-          {error && (
-            <p className="rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-3 font-semibold text-white shadow-lg shadow-brand-600/30 outline-none transition hover:brightness-110 focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
-            {submitting ? 'Connexion…' : 'Se connecter'}
-          </button>
-        </form>
       </div>
     </main>
   )

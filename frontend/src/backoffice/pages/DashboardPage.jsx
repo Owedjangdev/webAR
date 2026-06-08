@@ -1,4 +1,4 @@
-import { CheckCircle2, MapPin, Sparkles } from 'lucide-react'
+import { Activity, CheckCircle2, MapPin, Sparkles } from 'lucide-react'
 
 import { apiGet } from '../../lib/apiClient.js'
 import PageHeader from '../components/PageHeader.jsx'
@@ -7,14 +7,9 @@ import StatusBadge from '../components/StatusBadge.jsx'
 import { ErrorState, Loader } from '../components/feedback.jsx'
 import { useApiResource } from '../hooks/useApiResource.js'
 
-// Fonctions de chargement stables (définies hors composant → identité constante).
 const fetchPlaces = () => apiGet('/api/admin/places')
 const fetchExperiences = () => apiGet('/api/admin/experiences')
 
-/**
- * Dashboard : statistiques calculées à partir des listes réelles (lieux,
- * expériences, expériences publiées) + les expériences les plus récentes.
- */
 export default function DashboardPage() {
   const places = useApiResource(fetchPlaces)
   const experiences = useApiResource(fetchExperiences)
@@ -38,18 +33,24 @@ export default function DashboardPage() {
         <StatCard icon={CheckCircle2} label="Publiées" value={publishedCount} accent="emerald" />
       </div>
 
-      <section className="mt-8 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
-        <h2 className="mb-1 text-lg font-bold text-slate-800">Expériences récentes</h2>
+      <section className="mt-8 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <div className="flex items-center gap-2 border-b border-slate-100 px-6 py-4">
+          <Activity className="h-5 w-5 text-slate-400" />
+          <h2 className="text-base font-bold text-slate-800">Expériences récentes</h2>
+        </div>
         {recent.length === 0 ? (
-          <p className="py-4 text-sm text-slate-400">Aucune expérience pour l'instant.</p>
+          <p className="px-6 py-8 text-center text-sm text-slate-400">Aucune expérience pour l'instant.</p>
         ) : (
           <ul className="divide-y divide-slate-100">
             {recent.map((exp) => (
-              <li key={exp.experience_id} className="flex items-center justify-between gap-3 py-3">
+              <li
+                key={exp.experience_id}
+                className="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50/80"
+              >
                 <div className="min-w-0">
                   <p className="truncate font-medium text-slate-800">{exp.experience_id}</p>
                   <p className="truncate text-sm text-slate-500">
-                    {exp.place?.name} · {exp.template}
+                    {exp.place?.name} · <span className="text-slate-400">{exp.template}</span>
                   </p>
                 </div>
                 <StatusBadge status={exp.status} />
