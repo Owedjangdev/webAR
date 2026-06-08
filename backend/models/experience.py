@@ -12,6 +12,7 @@ from database import Base
 
 if TYPE_CHECKING:
     from models.asset import Asset
+    from models.hunt import Hunt
     from models.place import Place
 
 
@@ -49,3 +50,7 @@ class Experience(Base):
     place: Mapped[Place] = relationship(back_populates="experiences")
     # Assets propres à cette expérience (overlay/logo/... ; cf. asset.py).
     assets: Mapped[list[Asset]] = relationship(back_populates="experience")
+    # Chasse au trésor liée (0 ou 1 ; présente si template = 'treasure_hunt').
+    hunt: Mapped[Hunt | None] = relationship(
+        back_populates="experience", uselist=False
+    )
