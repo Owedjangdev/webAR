@@ -75,3 +75,6 @@ backend/static/qr/*
 .DS_Store
 Thumbs.db
 *.swp
+
+# ----- Mémoire projet locale (non publiée sur GitHub) -----
+CLAUDE.md

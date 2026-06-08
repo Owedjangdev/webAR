@@ -1,0 +1,34 @@
+import { Loader2 } from 'lucide-react'
+
+// Bouton réutilisable du backoffice (variantes + état de chargement).
+const VARIANTS = {
+  primary:
+    'bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-lg shadow-brand-600/30 hover:brightness-110 focus-visible:ring-brand-500',
+  outline:
+    'border border-slate-200 bg-white text-brand-600 hover:bg-slate-50 focus-visible:ring-brand-500',
+  ghost: 'text-slate-600 hover:bg-slate-100 focus-visible:ring-slate-300',
+  danger:
+    'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/30 hover:brightness-110 focus-visible:ring-red-400',
+}
+
+export default function Button({
+  variant = 'primary',
+  icon: Icon,
+  loading = false,
+  children,
+  className = '',
+  type = 'button',
+  ...props
+}) {
+  return (
+    <button
+      type={type}
+      disabled={loading || props.disabled}
+      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none transition focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${VARIANTS[variant]} ${className}`}
+      {...props}
+    >
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : Icon && <Icon className="h-4 w-4" />}
+      {children}
+    </button>
+  )
+}
