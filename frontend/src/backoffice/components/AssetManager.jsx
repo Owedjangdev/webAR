@@ -7,13 +7,8 @@ import FormField, { CONTROL_CLASS } from './FormField.jsx'
 import { useToast } from './Toast.jsx'
 import { ErrorState, Loader } from './feedback.jsx'
 
-// Types d'assets autorisés (cf. CLAUDE.md section 7 / AssetType backend).
 const ASSET_TYPES = ['overlay', 'logo', 'badge', 'image', 'audio']
 
-/**
- * Gestion des assets d'une expérience : liste (les siens + ceux hérités du lieu)
- * et ajout d'un asset de NIVEAU EXPÉRIENCE par URL (POST /api/assets, upsert).
- */
 export default function AssetManager({ experienceId }) {
   const toast = useToast()
   const [assets, setAssets] = useState(null)
@@ -21,7 +16,7 @@ export default function AssetManager({ experienceId }) {
   const [reloadKey, setReloadKey] = useState(0)
 
   const [type, setType] = useState('overlay')
-  const [source, setSource] = useState('url') // 'url' | 'file'
+  const [source, setSource] = useState('url')
   const [url, setUrl] = useState('')
   const [file, setFile] = useState(null)
   const [altText, setAltText] = useState('')
@@ -66,7 +61,7 @@ export default function AssetManager({ experienceId }) {
       setUrl('')
       setFile(null)
       setAltText('')
-      setReloadKey((k) => k + 1) // rafraîchit la liste
+      setReloadKey((k) => k + 1)
       toast.success('Asset ajouté')
     } catch (err) {
       setFormError(err.message)
@@ -78,13 +73,13 @@ export default function AssetManager({ experienceId }) {
   return (
     <div className="space-y-5">
       <section>
-        <h3 className="mb-2 text-sm font-semibold text-slate-700">Assets actuels</h3>
+        <h3 className="mb-3 text-sm font-bold text-slate-700">Assets actuels</h3>
         {loadError && <ErrorState message={loadError} />}
         {!loadError && assets === null && <Loader label="Chargement des assets…" />}
         {!loadError &&
           assets &&
           (assets.length === 0 ? (
-            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-400">
+            <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm text-slate-400">
               Aucun asset pour l'instant.
             </p>
           ) : (
@@ -92,21 +87,23 @@ export default function AssetManager({ experienceId }) {
               {assets.map((asset) => (
                 <li
                   key={asset.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2 text-sm"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3 text-sm transition-colors hover:bg-slate-50"
                 >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className="shrink-0 font-medium text-slate-700">{asset.type}</span>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                      {asset.type}
+                    </span>
                     <a
                       href={asset.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="truncate text-brand-600 hover:underline"
+                      className="truncate text-brand-600 transition-colors hover:text-brand-700 hover:underline"
                     >
                       {asset.url}
                     </a>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                       asset.place_id
                         ? 'bg-slate-100 text-slate-500'
                         : 'bg-brand-50 text-brand-600'
@@ -120,8 +117,8 @@ export default function AssetManager({ experienceId }) {
           ))}
       </section>
 
-      <form onSubmit={handleAdd} className="space-y-3 border-t border-slate-100 pt-4">
-        <h3 className="text-sm font-semibold text-slate-700">Ajouter un asset à cette expérience</h3>
+      <form onSubmit={handleAdd} className="space-y-4 border-t border-slate-100 pt-5">
+        <h3 className="text-sm font-bold text-slate-700">Ajouter un asset</h3>
         <div className="grid grid-cols-2 gap-3">
           <FormField label="Type" htmlFor="asset-type">
             <select
@@ -146,13 +143,15 @@ export default function AssetManager({ experienceId }) {
             />
           </FormField>
         </div>
-        {/* Source : URL (fonctionne) ou Fichier (upload — endpoint backend à venir). */}
+
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => setSource('url')}
-            className={`flex-1 cursor-pointer rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              source === 'url' ? 'bg-brand-50 text-brand-700' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+            className={`flex-1 cursor-pointer rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+              source === 'url'
+                ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200'
+                : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
             }`}
           >
             Par URL
@@ -160,8 +159,10 @@ export default function AssetManager({ experienceId }) {
           <button
             type="button"
             onClick={() => setSource('file')}
-            className={`flex-1 cursor-pointer rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              source === 'file' ? 'bg-brand-50 text-brand-700' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+            className={`flex-1 cursor-pointer rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+              source === 'file'
+                ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200'
+                : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
             }`}
           >
             Depuis le bureau
@@ -183,13 +184,13 @@ export default function AssetManager({ experienceId }) {
           <FormField
             label="Fichier"
             htmlFor="asset-file"
-            hint="Upload depuis ton ordinateur (endpoint backend à venir)."
+            hint="Upload depuis ton ordinateur."
           >
             <input
               id="asset-file"
               type="file"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm text-slate-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+              className="block w-full text-sm text-slate-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-brand-700 file:transition-colors hover:file:bg-brand-100"
             />
           </FormField>
         )}

@@ -16,7 +16,6 @@ const fetchPlaces = () => apiGet('/api/admin/places')
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 
-/** Liste des lieux (GET /api/admin/places) + création + logo via modales. */
 export default function PlacesPage() {
   const { data, loading, error, reload } = useApiResource(fetchPlaces)
   const toast = useToast()
@@ -59,23 +58,23 @@ export default function PlacesPage() {
             Crée ton premier lieu pour y rattacher des expériences.
           </EmptyState>
         ) : (
-          <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
+              <thead className="border-b border-slate-100 bg-slate-50/50">
                 <tr>
-                  <th className="px-5 py-3 font-medium">Nom</th>
-                  <th className="px-5 py-3 font-medium">Ville</th>
-                  <th className="px-5 py-3 font-medium">Créé le</th>
-                  <th className="px-5 py-3 text-right font-medium">Logo</th>
+                  <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Nom</th>
+                  <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Ville</th>
+                  <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Créé le</th>
+                  <th className="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Logo</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {data.map((place) => (
-                  <tr key={place.id} className="transition-colors hover:bg-slate-50">
-                    <td className="px-5 py-3 font-medium text-slate-800">{place.name}</td>
-                    <td className="px-5 py-3 text-slate-600">{place.city}</td>
-                    <td className="px-5 py-3 text-slate-500">{formatDate(place.created_at)}</td>
-                    <td className="px-5 py-3 text-right">
+                  <tr key={place.id} className="transition-colors hover:bg-slate-50/80">
+                    <td className="px-6 py-4 font-medium text-slate-800">{place.name}</td>
+                    <td className="px-6 py-4 text-slate-600">{place.city}</td>
+                    <td className="px-6 py-4 text-slate-500">{formatDate(place.created_at)}</td>
+                    <td className="px-6 py-4 text-right">
                       <Button
                         variant="outline"
                         icon={ImageIcon}

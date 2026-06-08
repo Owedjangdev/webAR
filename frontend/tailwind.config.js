@@ -5,16 +5,19 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
-      // Couleurs de marque issues de la maquette (bleu principal #2563EB).
+      // Palette bleu ciel (sky blue) — utilisée partout dans l'admin.
       colors: {
         brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
         },
       },
       // Animations (transform/opacity uniquement → GPU, fluides sur mobile faible).

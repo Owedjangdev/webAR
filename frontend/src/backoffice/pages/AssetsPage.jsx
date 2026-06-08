@@ -10,11 +10,6 @@ import { useApiResource } from '../hooks/useApiResource.js'
 
 const fetchExperiences = () => apiGet('/api/admin/experiences')
 
-/**
- * Page Assets : on sélectionne une expérience, puis on voit/ajoute ses assets
- * (réutilise AssetManager). Les assets étant toujours liés à une expérience/lieu,
- * on passe par ce sélecteur plutôt qu'une liste globale.
- */
 export default function AssetsPage() {
   const { data, loading, error } = useApiResource(fetchExperiences)
   const [selected, setSelected] = useState('')
@@ -37,7 +32,7 @@ export default function AssetsPage() {
           </EmptyState>
         ) : (
           <div className="space-y-6">
-            <div className="max-w-md rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
+            <div className="max-w-md rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
               <FormField label="Choisis une expérience" htmlFor="assets-exp">
                 <select
                   id="assets-exp"
@@ -56,7 +51,7 @@ export default function AssetsPage() {
             </div>
 
             {selected ? (
-              <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <AssetManager experienceId={selected} />
               </div>
             ) : (
