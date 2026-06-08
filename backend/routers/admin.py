@@ -5,21 +5,29 @@ n'est accessible sans un jeton valide de rôle 'admin' (401 sans jeton, 403 sino
 Règle métier : seul l'administrateur crée des lieux/expériences et les publie.
 """
 
-from fastapi import APIRouter, Depends, status
+import uuid
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
 from deps import require_admin
-from models import Experience, ExperienceStatus, Place
+from models import AssetType, Experience, ExperienceStatus, Place
 from schemas.admin import (
     AdminExperienceCreate,
     AdminExperienceOut,
     PlaceAdminOut,
     PlaceCreate,
 )
+from schemas.asset import AssetCreate, AssetOut
 from schemas.experience import ExperienceCreate, ExperienceSummary
-from services import experience_service, place_service
+from services import asset_service, experience_service, place_service
+
+# Dossier de stockage des fichiers uploadés (servi sous /static/uploads).
+UPLOAD_DIR = Path(__file__).resolve().parent.parent / "static" / "uploads"
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 Mo
 
 router = APIRouter(
     prefix="/api/admin",
@@ -100,3 +108,77 @@ def unpublish_experience(public_id: str, db: Session = Depends(get_db)) -> Exper
     brouillon → l'expérience n'est plus chargeable par le visiteur.
     """
     return experience_service.set_status(db, public_id, ExperienceStatus.draft)
+
+
+# --------------------- Détail / suppression d'expérience -------------------
+
+
+@router.get("/experiences/{public_id}", response_model=AdminExperienceOut)
+def get_admin_experience(public_id: str, db: Session = Depends(get_db)) -> Experience:
+    """Détail d'une expérience (toutes ses colonnes, brouillon inclus) — édition."""
+    return experience_service.get_or_404(db, public_id)
+
+
+@router.delete("/experiences/{public_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_admin_experience(public_id: str, db: Session = Depends(get_db)) -> None:
+    """Supprime une expérience et ses assets / QR code. **404** si inexistante."""
+    experience_service.delete_experience(db, public_id)
+
+
+# ----------------------------- Upload d'asset (fichier) --------------------
+
+
+@router.post("/assets/upload", response_model=AssetOut, status_code=status.HTTP_201_CREATED)
+async def upload_asset(
+    request: Request,
+    file: UploadFile = File(...),
+    type: AssetType = Form(...),
+    experience_id: str | None = Form(None),
+    place_id: int | None = Form(None),
+    alt_text: str | None = Form(None),
+    db: Session = Depends(get_db),
+) -> AssetOut:
+    """Upload un fichier (logo / overlay / image / audio…) et l'attache à une
+    expérience OU un lieu (exactement un des deux). Le fichier est stocké dans
+    `static/uploads/` et servi sous `/static/uploads/`.
+    """
+    if (experience_id is None) == (place_id is None):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Fournir exactement un de 'experience_id' ou 'place_id'.",
+        )
+
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Fichier trop volumineux (max 10 Mo).",
+        )
+
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    suffix = Path(file.filename or "").suffix.lower()
+    filename = f"{uuid.uuid4().hex}{suffix}"
+    file_path = UPLOAD_DIR / filename
+    file_path.write_bytes(content)
+
+    # URL absolue servie par le backend (ex. http://localhost:8000/static/uploads/x.png).
+    url = f"{str(request.base_url).rstrip('/')}/static/uploads/{filename}"
+
+    # Si la création de l'asset échoue (404 lieu/expérience, 422, erreur BDD),
+    # on supprime le fichier déjà écrit pour ne pas laisser d'orphelin sur disque.
+    try:
+        asset = asset_service.create_asset(
+            db,
+            AssetCreate(
+                experience_id=experience_id,
+                place_id=place_id,
+                type=type,
+                url=url,
+                alt_text=alt_text,
+            ),
+        )
+    except Exception:
+        file_path.unlink(missing_ok=True)
+        raise
+
+    return asset_service.to_out(asset)

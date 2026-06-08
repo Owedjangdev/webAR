@@ -1,8 +1,11 @@
 """Point d'entrée de l'API WebAR : application FastAPI, CORS et routers."""
 
+from pathlib import Path
+
 import models  # noqa: F401  (enregistre les modèles sur Base.metadata)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from config import settings
 from database import Base, engine
@@ -33,6 +36,13 @@ app.include_router(qr.router)
 app.include_router(assets.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
+
+# Sert les fichiers statiques (QR PNG générés, assets uploadés) sous /static.
+app.mount(
+    "/static",
+    StaticFiles(directory=Path(__file__).resolve().parent / "static"),
+    name="static",
+)
 
 
 @app.get("/", tags=["health"])
