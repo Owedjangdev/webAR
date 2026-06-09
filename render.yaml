@@ -1,0 +1,28 @@
+# Render Blueprint — backend FastAPI WebAR.
+# Permet de déployer le service via « New > Blueprint » sur render.com.
+# Les SECRETS (DATABASE_URL, JWT_SECRET, ...) NE SONT PAS ici : on les renseigne
+# dans le dashboard Render (onglet Environment). `sync: false` = « à saisir à la main ».
+services:
+  - type: web
+    name: webar-api
+    runtime: python
+    plan: free
+    region: frankfurt # le plus proche du Bénin parmi les régions Render
+    rootDir: backend # le code backend vit dans backend/
+    buildCommand: pip install -r requirements.txt
+    # Migre le schéma (idempotent) PUIS lance l'API. Bind 0.0.0.0:$PORT (imposé par Render).
+    startCommand: alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: DATABASE_URL # URL MySQL Aiven (mysql+pymysql://...)
+        sync: false
+      - key: DATABASE_SSL_CA # chemin du certificat CA Aiven (TLS obligatoire)
+        sync: false
+      - key: JWT_SECRET # python -c "import secrets; print(secrets.token_hex(32))"
+        sync: false
+      - key: CORS_ORIGINS # URL publique du frontend Vercel
+        sync: false
+      - key: FRONTEND_BASE_URL # idem (encodée dans les QR codes)
+        sync: false

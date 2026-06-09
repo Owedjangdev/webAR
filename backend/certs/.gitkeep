@@ -1,0 +1,2 @@
+# Dépose ici le certificat CA d'Aiven : ca.pem (cf. DEPLOY.md, phase 2).
+# Le CA est public (pas un secret) → il PEUT être committé pour que Render y accède.

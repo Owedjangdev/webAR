@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     # URL de connexion MySQL, ex. mysql+pymysql://user:pass@localhost:3306/webar
     database_url: str
 
+    # Chemin d'un certificat CA pour une connexion MySQL chiffrée (TLS).
+    # Requis par les hébergeurs managés type Aiven. Laissé vide en local.
+    database_ssl_ca: str | None = None
+
     # Origines autorisées par CORS (frontend React), séparées par des virgules.
     cors_origins: str = "http://localhost:5173"
 
