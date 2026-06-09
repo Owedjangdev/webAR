@@ -4,10 +4,11 @@ import { useEffect, useRef } from 'react'
 function hasWebGL() {
   try {
     const canvas = document.createElement('canvas')
-    return Boolean(
-      window.WebGLRenderingContext &&
-        (canvas.getContext('webgl2') || canvas.getContext('webgl')),
-    )
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
+    if (!gl) return false
+    // Libère le contexte de test : il ne sert qu'à la détection.
+    gl.getExtension('WEBGL_lose_context')?.loseContext()
+    return true
   } catch {
     return false
   }
