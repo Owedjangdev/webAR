@@ -28,9 +28,9 @@ export default function Modal({ open, title, onClose, children }) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-black/10"
+        className="relative z-10 flex max-h-[calc(100vh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-black/10"
       >
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4">
           <h2 className="text-lg font-bold text-slate-800">{title}</h2>
           <button
             type="button"
@@ -41,7 +41,9 @@ export default function Modal({ open, title, onClose, children }) {
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        {/* Corps scrollable : garde l'en-tête figé et les actions toujours
+            atteignables même sur un formulaire long (ex. object_ar). */}
+        <div className="min-h-0 overflow-y-auto p-6">{children}</div>
       </div>
     </div>
   )
