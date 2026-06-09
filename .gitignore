@@ -78,3 +78,7 @@ Thumbs.db
 
 # ----- Mémoire projet locale (non publiée sur GitHub) -----
 CLAUDE.md
+
+# Configuration Claude Code locale (rules, skills, caches, sessions) :
+# gardée en local uniquement, jamais poussée sur GitHub.
+.claude/
