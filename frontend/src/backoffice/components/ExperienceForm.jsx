@@ -1,34 +1,41 @@
 import { useEffect, useState } from 'react'
 
 import { apiGet, apiPost } from '../../lib/apiClient.js'
+import {
+  DEFAULT_COLOR,
+  TEMPLATE_KEYS,
+  getTemplateConfig,
+} from '../config/templateConfig.js'
 import Button from './Button.jsx'
+import ConfigField from './ConfigField.jsx'
 import FormField, { CONTROL_CLASS } from './FormField.jsx'
 import { ErrorState } from './feedback.jsx'
 
-// Les 7 templates autorisés (cf. CLAUDE.md section 9). Le backend revalide (422).
-const TEMPLATES = [
-  'selfie_ar',
-  'badge',
-  'object_ar',
-  'treasure_hunt',
-  'guide_narratif',
-  'capsule_collective',
-  'portal_ar',
-]
+/** Valeurs initiales des champs config d'un template (couleur = défaut, reste vide). */
+function initialConfig(template) {
+  const config = {}
+  for (const field of getTemplateConfig(template).fields) {
+    config[field.name] = field.type === 'color' ? DEFAULT_COLOR : ''
+  }
+  return config
+}
 
 /**
  * Formulaire de création d'une expérience (POST /api/admin/experiences).
- * Le lieu vient d'une liste déroulante (lieux existants), le template d'une
- * liste fermée, et message/color sont assemblés en config_json. L'expérience
- * est créée en `draft` (forcé par le backend).
+ *
+ * Les champs communs (public_id, lieu, template) sont fixes ; la section
+ * « Configuration » s'adapte DYNAMIQUEMENT au template choisi (cf.
+ * templateConfig.js, source unique de vérité). L'expérience est créée en `draft`.
+ *
+ * @param {function} onCreated - appelé après succès avec { template, publicId }
+ * @param {function} onCancel  - ferme le formulaire sans créer
  */
 export default function ExperienceForm({ onCreated, onCancel }) {
   const [places, setPlaces] = useState([])
   const [publicId, setPublicId] = useState('')
   const [placeId, setPlaceId] = useState('')
   const [template, setTemplate] = useState('')
-  const [message, setMessage] = useState('')
-  const [color, setColor] = useState('#2563EB')
+  const [config, setConfig] = useState({})
   const [errors, setErrors] = useState({})
   const [apiError, setApiError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -44,16 +51,66 @@ export default function ExperienceForm({ onCreated, onCancel }) {
     }
   }, [])
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    setApiError(null)
-    const nextErrors = {
+  const templateFields = template ? getTemplateConfig(template).fields : []
+
+  // Vrai si l'admin a déjà saisi un champ config (hors couleur) → on prévient
+  // avant d'écraser ces valeurs en changeant de template.
+  const isConfigDirty = () =>
+    templateFields.some((f) => f.type !== 'color' && (config[f.name] ?? '').trim() !== '')
+
+  const handleTemplateChange = (next) => {
+    if (next === template) return
+    if (
+      template &&
+      isConfigDirty() &&
+      !window.confirm('Les données de configuration saisies seront perdues. Continuer ?')
+    ) {
+      return // on garde le template précédent (le select est contrôlé → revient seul)
+    }
+    setTemplate(next)
+    setConfig(next ? initialConfig(next) : {})
+    setErrors((prev) => ({ ...prev, template: undefined, config: {} }))
+  }
+
+  const setConfigField = (name, value) =>
+    setConfig((prev) => ({ ...prev, [name]: value }))
+
+  // Assemble config_json : uniquement les champs du template, sans champ vide.
+  const buildConfigJson = () => {
+    const result = {}
+    for (const field of templateFields) {
+      const value = config[field.name]
+      if (field.type === 'color') {
+        result[field.name] = value || DEFAULT_COLOR
+      } else if ((value ?? '').trim() !== '') {
+        result[field.name] = value.trim()
+      }
+    }
+    return result
+  }
+
+  const validate = () => {
+    const base = {
       publicId: publicId.trim() ? undefined : "L'identifiant public est requis.",
       placeId: placeId ? undefined : 'Choisis un lieu.',
       template: template ? undefined : 'Choisis un template.',
     }
-    setErrors(nextErrors)
-    if (nextErrors.publicId || nextErrors.placeId || nextErrors.template) return
+    const configErrors = {}
+    for (const field of templateFields) {
+      if (field.required && !(config[field.name] ?? '').trim()) {
+        configErrors[field.name] = `${field.label} est requis.`
+      }
+    }
+    const next = { ...base, config: configErrors }
+    setErrors(next)
+    const hasBase = base.publicId || base.placeId || base.template
+    return !hasBase && Object.keys(configErrors).length === 0
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    setApiError(null)
+    if (!validate()) return
 
     setSubmitting(true)
     try {
@@ -61,9 +118,9 @@ export default function ExperienceForm({ onCreated, onCancel }) {
         public_id: publicId.trim(),
         place_id: Number(placeId),
         template,
-        config_json: { message: message.trim(), color },
+        config_json: buildConfigJson(),
       })
-      onCreated()
+      onCreated({ template, publicId: publicId.trim() })
     } catch (err) {
       setApiError(err.message)
     } finally {
@@ -73,6 +130,7 @@ export default function ExperienceForm({ onCreated, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      {/* --- Champs communs --- */}
       <FormField label="Identifiant public" htmlFor="exp-public-id" error={errors.publicId} hint="ex. exp_010">
         <input
           id="exp-public-id"
@@ -105,39 +163,42 @@ export default function ExperienceForm({ onCreated, onCancel }) {
           id="exp-template"
           className={CONTROL_CLASS}
           value={template}
-          onChange={(e) => setTemplate(e.target.value)}
+          onChange={(e) => handleTemplateChange(e.target.value)}
         >
           <option value="">— Choisir un template —</option>
-          {TEMPLATES.map((key) => (
+          {TEMPLATE_KEYS.map((key) => (
             <option key={key} value={key}>
-              {key}
+              {getTemplateConfig(key).label} ({key})
             </option>
           ))}
         </select>
       </FormField>
 
-      <FormField label="Message (config)" htmlFor="exp-message" hint="Affiché dans l'expérience">
-        <input
-          id="exp-message"
-          className={CONTROL_CLASS}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Souvenir au Palmier"
-        />
-      </FormField>
+      {/* --- Section Configuration : dynamique selon le template --- */}
+      {template && (
+        <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Configuration — {getTemplateConfig(template).label}
+          </p>
+          {templateFields.map((field) => (
+            <ConfigField
+              key={field.name}
+              field={field}
+              value={config[field.name] ?? ''}
+              error={errors.config?.[field.name]}
+              onChange={(value) => setConfigField(field.name, value)}
+            />
+          ))}
 
-      <FormField label="Couleur (config)" htmlFor="exp-color">
-        <div className="flex items-center gap-3">
-          <input
-            id="exp-color"
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            className="h-10 w-14 cursor-pointer rounded-lg border border-slate-200"
-          />
-          <span className="text-sm text-slate-500">{color}</span>
+          {/* Aperçu live du config_json assemblé (pédagogique, léger). */}
+          <div>
+            <p className="mb-1 text-xs font-medium text-slate-400">Aperçu config_json</p>
+            <pre className="overflow-x-auto rounded-lg bg-slate-900 px-3 py-2 text-xs text-slate-100">
+              {JSON.stringify(buildConfigJson(), null, 2)}
+            </pre>
+          </div>
         </div>
-      </FormField>
+      )}
 
       <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
         L'expérience sera créée en <strong>brouillon</strong> ; tu pourras la publier ensuite.

@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Images, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 
 import { apiDelete, apiGet, apiPut } from '../../lib/apiClient.js'
+import { assetLabel, getTemplateConfig } from '../config/templateConfig.js'
 import AssetManager from '../components/AssetManager.jsx'
 import Button from '../components/Button.jsx'
 import ExperienceEditForm from '../components/ExperienceEditForm.jsx'
@@ -18,7 +20,9 @@ const fetchExperiences = () => apiGet('/api/admin/experiences')
 export default function ExperiencesPage() {
   const { data, loading, error, reload } = useApiResource(fetchExperiences)
   const toast = useToast()
+  const navigate = useNavigate()
   const [creating, setCreating] = useState(false)
+  const [assetReminder, setAssetReminder] = useState(null)
   const [assetsExpId, setAssetsExpId] = useState(null)
   const [editExp, setEditExp] = useState(null)
   const [deleteExp, setDeleteExp] = useState(null)
@@ -158,10 +162,16 @@ export default function ExperiencesPage() {
 
       <Modal open={creating} title="Créer une expérience" onClose={() => setCreating(false)}>
         <ExperienceForm
-          onCreated={() => {
+          onCreated={({ template, publicId }) => {
             setCreating(false)
             reload()
-            toast.success('Expérience créée avec succès')
+            const config = getTemplateConfig(template)
+            // Templates avec assets requis → rappel actionnable ; sinon, simple succès.
+            if (config.requiresAssets) {
+              setAssetReminder({ publicId, assetsNeeded: config.assetsNeeded })
+            } else {
+              toast.success('Expérience créée en draft.')
+            }
           }}
           onCancel={() => setCreating(false)}
         />
@@ -213,6 +223,47 @@ export default function ExperiencesPage() {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        open={assetReminder !== null}
+        title="Expérience créée — assets requis"
+        onClose={() => setAssetReminder(null)}
+      >
+        {assetReminder && (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">
+              ✅ L'expérience <strong>{assetReminder.publicId}</strong> a été créée en{' '}
+              <strong>brouillon</strong>. Ce template a besoin d'assets pour fonctionner
+              correctement.
+            </p>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-sm font-medium text-amber-800">Assets à ajouter :</p>
+              <ul className="mt-1 list-inside list-disc text-sm text-amber-700">
+                {assetReminder.assetsNeeded.map((key) => (
+                  <li key={key}>{assetLabel(key)}</li>
+                ))}
+              </ul>
+            </div>
+            <p className="text-xs text-slate-500">
+              Tu pourras publier l'expérience une fois les assets ajoutés.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setAssetReminder(null)}>
+                Plus tard
+              </Button>
+              <Button
+                icon={Images}
+                onClick={() => {
+                  setAssetReminder(null)
+                  navigate('/admin/assets')
+                }}
+              >
+                Aller aux Assets
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )
