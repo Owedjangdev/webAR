@@ -67,7 +67,7 @@ function drawCaption(ctx, canvas, text) {
 export function useCanvas() {
   const canvasRef = useRef(null)
 
-  const capture = useCallback((video, { overlay, logo, message, mirror = false } = {}) => {
+  const capture = useCallback((video, { overlay, overlayCanvas, logo, message, mirror = false } = {}) => {
     if (!video?.videoWidth) {
       return null
     }
@@ -88,6 +88,12 @@ export function useCanvas() {
     }
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
     ctx.restore()
+
+    // Couche 3D (canvas WebGL, ex. template object_ar) : dessinée telle quelle,
+    // sans miroir, par-dessus la vidéo. Ignorée si absente (autres templates).
+    if (overlayCanvas?.width > 0 && overlayCanvas?.height > 0) {
+      ctx.drawImage(overlayCanvas, 0, 0, canvas.width, canvas.height)
+    }
 
     // Overlay décoratif (seulement s'il est bien chargé).
     if (overlay?.complete && overlay.naturalWidth > 0) {
