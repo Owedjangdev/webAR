@@ -8,6 +8,7 @@ import {
   QrCode,
   Settings,
   Sparkles,
+  Users,
   X,
 } from 'lucide-react'
 
@@ -18,6 +19,7 @@ import Avatar from './Avatar.jsx'
 const NAV = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/places', label: 'Lieux', icon: MapPin },
+  { to: '/admin/partners', label: 'Partenaires', icon: Users },
   { to: '/admin/experiences', label: 'Expériences', icon: Sparkles },
   { to: '/admin/assets', label: 'Assets', icon: Images },
   { to: '/admin/qr', label: 'Génération QR', icon: QrCode },
