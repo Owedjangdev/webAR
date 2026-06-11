@@ -23,7 +23,8 @@ from schemas.admin import (
 )
 from schemas.asset import AssetCreate, AssetOut
 from schemas.experience import ExperienceCreate, ExperienceSummary
-from services import asset_service, experience_service, place_service
+from schemas.partner import PartnerCreate, PartnerOut
+from services import asset_service, experience_service, partner_service, place_service
 
 # Dossier de stockage des fichiers uploadés (servi sous /static/uploads).
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "static" / "uploads"
@@ -89,6 +90,36 @@ def create_admin_experience(
             config=payload.config_json,
         ),
     )
+
+
+# ----------------------------- Partenaires ---------------------------------
+
+
+@router.get("/partners", response_model=list[PartnerOut])
+def list_admin_partners(db: Session = Depends(get_db)) -> list:
+    """Liste les comptes partenaires et leurs lieux rattachés (réservé admin)."""
+    return partner_service.list_partners(db)
+
+
+@router.post("/partners", response_model=PartnerOut, status_code=status.HTTP_201_CREATED)
+def create_admin_partner(payload: PartnerCreate, db: Session = Depends(get_db)):
+    """Crée un compte partenaire (email réel + mot de passe), rattaché à ses lieux.
+
+    **409** si l'email existe déjà ; **404** si un `place_id` à rattacher est inconnu.
+    """
+    return partner_service.create_partner(db, payload)
+
+
+@router.put("/partners/{partner_id}/activate", response_model=PartnerOut)
+def activate_admin_partner(partner_id: int, db: Session = Depends(get_db)):
+    """Réactive un compte partenaire suspendu. **404** si inexistant."""
+    return partner_service.set_partner_active(db, partner_id, True)
+
+
+@router.put("/partners/{partner_id}/deactivate", response_model=PartnerOut)
+def deactivate_admin_partner(partner_id: int, db: Session = Depends(get_db)):
+    """Suspend un compte partenaire (il ne peut plus se connecter). **404** si inexistant."""
+    return partner_service.set_partner_active(db, partner_id, False)
 
 
 # ------------------------- Publication / retrait ---------------------------

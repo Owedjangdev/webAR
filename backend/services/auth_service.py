@@ -17,4 +17,7 @@ def authenticate(db: Session, email: str, password: str) -> BackOfficeUser | Non
     user = db.scalar(select(BackOfficeUser).where(BackOfficeUser.email == email))
     if user is None or not verify_password(password, user.password_hash):
         return None
+    # Compte suspendu par l'admin (scénario A2) : connexion refusée.
+    if not user.is_active:
+        return None
     return user
