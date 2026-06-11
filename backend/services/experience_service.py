@@ -16,7 +16,15 @@ from fastapi import HTTPException, status
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from models import Asset, AssetType, Experience, ExperienceStatus, Place, QrCode
+from models import (
+    Asset,
+    AssetType,
+    BackOfficeUser,
+    Experience,
+    ExperienceStatus,
+    Place,
+    QrCode,
+)
 from schemas.experience import (
     ExperienceAssets,
     ExperienceCreate,
@@ -31,6 +39,16 @@ from schemas.experience import (
 _ASSET_TYPE_BY_KEY: dict[str, AssetType] = {
     "overlay_image": AssetType.overlay,
     "logo": AssetType.logo,
+}
+
+# Libellé « contrat » d'un type d'asset (inverse), pour les messages d'erreur.
+_KEY_BY_ASSET_TYPE: dict[AssetType, str] = {v: k for k, v in _ASSET_TYPE_BY_KEY.items()}
+
+# Assets OBLIGATOIRES pour qu'un template fonctionne (garde A4 à la publication).
+# Miroir de templateConfig (front) ; un template absent = aucun asset requis.
+_REQUIRED_ASSET_TYPES: dict[str, set[AssetType]] = {
+    "selfie_ar": {AssetType.overlay, AssetType.logo},
+    "badge": {AssetType.logo},
 }
 
 # Identifiant public auto-généré : "exp_001", "exp_002"...
@@ -154,6 +172,37 @@ def _get_or_404(db: Session, public_id: str) -> Experience:
 # ---------------------------------------------------------------------------
 
 
+def _ensure_place_owner_active(db: Session, place: Place) -> None:
+    """Garde A3 : refuse un lieu dont le partenaire propriétaire est suspendu.
+
+    Un lieu non rattaché (owner_id NULL) est toujours accepté.
+    """
+    if place.owner_id is None:
+        return
+    owner = db.get(BackOfficeUser, place.owner_id)
+    if owner is not None and not owner.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Le partenaire propriétaire de ce lieu est suspendu. "
+            "Choisis un autre lieu ou réactive le partenaire.",
+        )
+
+
+def _missing_required_assets(experience: Experience) -> list[str]:
+    """Garde A4 : libellés des assets obligatoires manquants pour publier.
+
+    Fusionne les assets du LIEU et de l'EXPÉRIENCE (comme le contrat visiteur).
+    Liste vide => publication autorisée.
+    """
+    required = _REQUIRED_ASSET_TYPES.get(experience.template, set())
+    if not required:
+        return []
+    available = {asset.type for asset in experience.place.assets}
+    available |= {asset.type for asset in experience.assets}
+    missing = required - available
+    return sorted(_KEY_BY_ASSET_TYPE.get(asset_type, asset_type.value) for asset_type in missing)
+
+
 def create_experience(db: Session, payload: ExperienceCreate) -> Experience:
     """Crée une expérience (et son lieu/ses assets si nécessaire) puis la renvoie."""
     public_id = payload.public_id or _generate_public_id(db)
@@ -164,6 +213,7 @@ def create_experience(db: Session, payload: ExperienceCreate) -> Experience:
         )
 
     place = _resolve_place(db, payload)
+    _ensure_place_owner_active(db, place)  # garde A3
     experience = Experience(
         public_id=public_id,
         template=payload.template,
@@ -206,6 +256,16 @@ def set_status(db: Session, public_id: str, new_status: ExperienceStatus) -> Exp
     /unpublish.
     """
     experience = _get_or_404(db, public_id)
+
+    # Garde A4 : on ne publie pas une expérience à qui il manque des assets requis.
+    if new_status == ExperienceStatus.published:
+        missing = _missing_required_assets(experience)
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Publication impossible : assets requis manquants ({', '.join(missing)}).",
+            )
+
     experience.status = new_status
     db.commit()
     db.refresh(experience)

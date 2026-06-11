@@ -20,6 +20,7 @@ from schemas.admin import (
     AdminExperienceOut,
     PlaceAdminOut,
     PlaceCreate,
+    PlaceUpdate,
 )
 from schemas.asset import AssetCreate, AssetOut
 from schemas.experience import ExperienceCreate, ExperienceSummary
@@ -29,6 +30,15 @@ from services import asset_service, experience_service, partner_service, place_s
 # Dossier de stockage des fichiers uploadés (servi sous /static/uploads).
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "static" / "uploads"
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 Mo
+
+# Formats autorisés par type d'asset (garde A2 : refuser un format non supporté).
+_ALLOWED_EXTENSIONS: dict[AssetType, set[str]] = {
+    AssetType.overlay: {".png", ".jpg", ".jpeg", ".webp"},
+    AssetType.logo: {".png", ".jpg", ".jpeg", ".webp", ".svg"},
+    AssetType.badge: {".png", ".jpg", ".jpeg", ".webp"},
+    AssetType.image: {".png", ".jpg", ".jpeg", ".webp", ".gif"},
+    AssetType.audio: {".mp3", ".ogg", ".wav", ".m4a"},
+}
 
 router = APIRouter(
     prefix="/api/admin",
@@ -62,8 +72,25 @@ def list_experiences(db: Session = Depends(get_db)) -> list[ExperienceSummary]:
 
 @router.post("/places", response_model=PlaceAdminOut, status_code=status.HTTP_201_CREATED)
 def create_admin_place(payload: PlaceCreate, db: Session = Depends(get_db)) -> Place:
-    """Crée un lieu (réservé admin)."""
-    return place_service.create_place(db, payload.name, payload.city)
+    """Crée un lieu (réservé admin). 422 si `owner_id` n'est pas un partenaire valide."""
+    return place_service.create_place(db, payload)
+
+
+@router.put("/places/{place_id}", response_model=PlaceAdminOut)
+def update_admin_place(
+    place_id: int, payload: PlaceUpdate, db: Session = Depends(get_db)
+) -> Place:
+    """Met à jour un lieu (champs fournis) + rattachement partenaire (`owner_id`).
+
+    **404** si le lieu n'existe pas ; **422** si `owner_id` n'est pas un partenaire.
+    """
+    return place_service.update_place(db, place_id, payload)
+
+
+@router.delete("/places/{place_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_admin_place(place_id: int, db: Session = Depends(get_db)) -> None:
+    """Supprime un lieu. **404** si inconnu ; **409** s'il porte des expériences."""
+    place_service.delete_place(db, place_id)
 
 
 @router.post(
@@ -179,6 +206,16 @@ async def upload_asset(
             detail="Fournir exactement un de 'experience_id' ou 'place_id'.",
         )
 
+    # Garde A2 : format de fichier supporté pour ce type d'asset.
+    suffix = Path(file.filename or "").suffix.lower()
+    allowed = _ALLOWED_EXTENSIONS.get(type, set())
+    if suffix not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=f"Format non supporté pour un asset '{type.value}'. "
+            f"Formats autorisés : {', '.join(sorted(allowed))}.",
+        )
+
     content = await file.read()
     if len(content) > MAX_UPLOAD_BYTES:
         raise HTTPException(
@@ -187,7 +224,6 @@ async def upload_asset(
         )
 
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    suffix = Path(file.filename or "").suffix.lower()
     filename = f"{uuid.uuid4().hex}{suffix}"
     file_path = UPLOAD_DIR / filename
     file_path.write_bytes(content)
