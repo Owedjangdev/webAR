@@ -33,6 +33,27 @@ class PlaceCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=255)
     city: str = Field(min_length=1, max_length=100)
+    type: str | None = Field(default=None, max_length=100)
+    address: str | None = Field(default=None, max_length=255)
+    description: str | None = None
+    # Partenaire propriétaire (optionnel ; rattachement possible plus tard).
+    owner_id: int | None = None
+
+
+class PlaceUpdate(BaseModel):
+    """Corps de PUT /api/admin/places/{id} : mise à jour partielle.
+
+    Tous les champs sont optionnels ; seuls ceux fournis sont modifiés.
+    `owner_id` peut valoir un id de partenaire (rattacher) — pour détacher, on
+    ne le fournit simplement pas (la modification explicite à NULL n'est pas gérée ici).
+    """
+
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    city: str | None = Field(default=None, min_length=1, max_length=100)
+    type: str | None = Field(default=None, max_length=100)
+    address: str | None = Field(default=None, max_length=255)
+    description: str | None = None
+    owner_id: int | None = None
 
 
 class PlaceAdminOut(BaseModel):
@@ -43,6 +64,10 @@ class PlaceAdminOut(BaseModel):
     id: int
     name: str
     city: str
+    type: str | None = None
+    address: str | None = None
+    description: str | None = None
+    owner_id: int | None = None
     created_at: datetime
 
 
