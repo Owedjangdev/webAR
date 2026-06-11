@@ -6,6 +6,7 @@ import AssetsPage from './backoffice/pages/AssetsPage.jsx'
 import DashboardPage from './backoffice/pages/DashboardPage.jsx'
 import ExperiencesPage from './backoffice/pages/ExperiencesPage.jsx'
 import LoginPage from './backoffice/pages/LoginPage.jsx'
+import PartnersPage from './backoffice/pages/PartnersPage.jsx'
 import PlacesPage from './backoffice/pages/PlacesPage.jsx'
 import QrGenerationPage from './backoffice/pages/QrGenerationPage.jsx'
 import SettingsPage from './backoffice/pages/SettingsPage.jsx'
@@ -39,6 +40,7 @@ export default function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="places" element={<PlacesPage />} />
+          <Route path="partners" element={<PartnersPage />} />
           <Route path="experiences" element={<ExperiencesPage />} />
           <Route path="assets" element={<AssetsPage />} />
           <Route path="qr" element={<QrGenerationPage />} />
