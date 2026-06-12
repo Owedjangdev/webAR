@@ -56,7 +56,7 @@ async function adminRequest(method, path, body) {
   if (response.status === 401) {
     // Jeton absent ou expiré -> on nettoie et on renvoie au login.
     clearSession()
-    window.location.assign('/admin/login')
+    window.location.assign('/login')
     throw new Error('Session expirée, reconnecte-toi.')
   }
   if (!response.ok) {
@@ -94,7 +94,7 @@ export async function uploadAsset(file, { experienceId, placeId, type, altText }
   })
   if (response.status === 401) {
     clearSession()
-    window.location.assign('/admin/login')
+    window.location.assign('/login')
     throw new Error('Session expirée, reconnecte-toi.')
   }
   if (!response.ok) {

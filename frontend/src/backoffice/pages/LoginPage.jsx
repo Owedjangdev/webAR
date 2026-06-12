@@ -56,7 +56,7 @@ export default function LoginPage() {
         return
       }
       saveSession(access_token, role, email)
-      navigate(HOME[role] ?? '/admin/login', { replace: true })
+      navigate(HOME[role] ?? '/login', { replace: true })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -154,7 +154,7 @@ export default function LoginPage() {
               className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 font-semibold text-white shadow-md shadow-brand-500/25 outline-none transition-all duration-200 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/30 focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
-              {submitting ? 'Connexion…' : `Se connecter — ${current.label}`}
+              {submitting ? 'Connexion…' : `Se connecter `}
             </button>
           </form>
 

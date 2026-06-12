@@ -33,8 +33,12 @@ export default function App() {
         {/* Page visiteur : lit ?id= dans l'URL (ex. /webar?id=exp_001). */}
         <Route path="/webar" element={<ExperiencePage />} />
 
+        {/* Connexion partagée (admin + partenaire). */}
+        <Route path="/login" element={<LoginPage />} />
+        {/* Ancienne URL conservée : redirige vers la connexion partagée. */}
+        <Route path="/admin/login" element={<Navigate to="/login" replace />} />
+
         {/* Backoffice administrateur. */}
-        <Route path="/admin/login" element={<LoginPage />} />
         <Route
           path="/admin"
           element={

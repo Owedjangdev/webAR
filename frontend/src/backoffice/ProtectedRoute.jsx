@@ -11,7 +11,7 @@ import { getRole, isAuthenticated } from '../lib/auth.js'
  */
 export default function ProtectedRoute({ children, role = 'admin' }) {
   if (!isAuthenticated() || getRole() !== role) {
-    return <Navigate to="/admin/login" replace />
+    return <Navigate to="/login" replace />
   }
   return children
 }
