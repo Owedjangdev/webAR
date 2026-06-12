@@ -17,11 +17,14 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from models import (
+    AnonymousSession,
     Asset,
     AssetType,
     BackOfficeUser,
     Experience,
     ExperienceStatus,
+    Hunt,
+    HuntStep,
     Place,
     QrCode,
 )
@@ -281,9 +284,21 @@ def delete_experience(db: Session, public_id: str) -> None:
     """Supprime une expérience et ses dépendances (assets, QR code). 404 si inconnue.
 
     On retire d'abord les lignes liées (clés étrangères) pour éviter une erreur
-    d'intégrité, puis l'expérience elle-même.
+    d'intégrité, puis l'expérience elle-même. Couvre aussi les expériences
+    `treasure_hunt` : leur chasse, ses étapes et les sessions anonymes sont
+    supprimées (sinon la FK hunts.experience_id bloquait la suppression).
     """
     experience = _get_or_404(db, public_id)
+
+    # Chasse au trésor liée : sessions anonymes -> étapes -> chasse (ordre FK).
+    hunt_ids = list(
+        db.scalars(select(Hunt.id).where(Hunt.experience_id == experience.id)).all()
+    )
+    if hunt_ids:
+        db.execute(delete(AnonymousSession).where(AnonymousSession.hunt_id.in_(hunt_ids)))
+        db.execute(delete(HuntStep).where(HuntStep.hunt_id.in_(hunt_ids)))
+        db.execute(delete(Hunt).where(Hunt.id.in_(hunt_ids)))
+
     db.execute(delete(Asset).where(Asset.experience_id == experience.id))
     db.execute(delete(QrCode).where(QrCode.experience_id == experience.id))
     db.delete(experience)
