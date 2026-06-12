@@ -2,8 +2,10 @@
 
 - get_current_user : lit le jeton Bearer, le vérifie, renvoie l'utilisateur.
 - require_admin    : exige en plus le rôle 'admin'.
+- require_partner  : exige le rôle 'partner' ET un compte actif (is_active).
 
-401 si jeton absent/invalide/expiré ; 403 si authentifié mais rôle insuffisant.
+401 si jeton absent/invalide/expiré ; 403 si authentifié mais rôle insuffisant
+ou compte désactivé (scénario A2 : un partenaire suspendu pendant sa navigation).
 """
 
 from fastapi import Depends, HTTPException, status
@@ -53,5 +55,25 @@ def require_admin(user: BackOfficeUser = Depends(get_current_user)) -> BackOffic
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Accès réservé aux administrateurs.",
+        )
+    return user
+
+
+def require_partner(user: BackOfficeUser = Depends(get_current_user)) -> BackOfficeUser:
+    """Autorise uniquement les comptes 'partner' actifs.
+
+    Refuse (403) un compte d'un autre rôle, ou un partenaire désactivé par l'admin
+    même si son jeton est encore valide (scénario A2 : révocation des droits en
+    cours de navigation, message explicite « Compte désactivé »).
+    """
+    if user.role != UserRole.partner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux partenaires.",
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Compte désactivé. Contactez l'administrateur.",
         )
     return user
