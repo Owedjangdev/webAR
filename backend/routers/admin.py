@@ -14,14 +14,16 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from deps import require_admin
-from models import AssetType, Experience, ExperienceStatus, Place
+from models import AssetType, BackOfficeUser, Experience, ExperienceStatus, Place
 from schemas.admin import (
     AdminExperienceCreate,
     AdminExperienceOut,
+    PasswordChange,
     PlaceAdminOut,
     PlaceCreate,
     PlaceUpdate,
 )
+from security import hash_password, verify_password
 from schemas.asset import AssetCreate, AssetOut
 from schemas.experience import ExperienceCreate, ExperienceSummary
 from schemas.partner import PartnerCreate, PartnerOut
@@ -147,6 +149,28 @@ def activate_admin_partner(partner_id: int, db: Session = Depends(get_db)):
 def deactivate_admin_partner(partner_id: int, db: Session = Depends(get_db)):
     """Suspend un compte partenaire (il ne peut plus se connecter). **404** si inexistant."""
     return partner_service.set_partner_active(db, partner_id, False)
+
+
+# ------------------------------- Compte ------------------------------------
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    payload: PasswordChange,
+    current: BackOfficeUser = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> None:
+    """Change le mot de passe du compte connecté.
+
+    **400** si le mot de passe actuel est incorrect. Le nouveau est haché (bcrypt).
+    """
+    if not verify_password(payload.current_password, current.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mot de passe actuel incorrect.",
+        )
+    current.password_hash = hash_password(payload.new_password)
+    db.commit()
 
 
 # ------------------------- Publication / retrait ---------------------------

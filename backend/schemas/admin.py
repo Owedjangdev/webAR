@@ -71,6 +71,13 @@ class PlaceAdminOut(BaseModel):
     created_at: datetime
 
 
+class PasswordChange(BaseModel):
+    """Corps de POST /api/admin/change-password (changer son propre mot de passe)."""
+
+    current_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 class AdminExperienceCreate(BaseModel):
     """Corps de POST /api/admin/experiences.
 
