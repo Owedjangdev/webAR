@@ -3,6 +3,7 @@ import { ArrowLeft, Box, CameraOff, Check, Hand, MapPin, ScanLine, ShieldCheck }
 
 import { CameraStatus, FacingMode, useCamera } from '../hooks/useCamera.js'
 import { useCanvas } from '../hooks/useCanvas.js'
+import { trackCapture } from '../lib/api.js'
 import { isObjectDiscovered, markObjectDiscovered } from '../lib/discoveryStorage.js'
 import SouvenirScreen from '../components/SouvenirScreen.jsx'
 import ARTemplateShell from './ARTemplateShell.jsx'
@@ -80,6 +81,9 @@ export default function ObjectInteractiveTemplate({ experienceId, place, assets,
       message: caption,
       mirror: false, // caméra arrière : pas de miroir
     })
+    if (image) {
+      trackCapture(experienceId) // souvenir capturé : compté pour les stats partenaire
+    }
     setSouvenir(image)
     setCaptureError(image === null)
   }
