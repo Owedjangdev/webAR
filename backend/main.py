@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from config import settings
-from routers import admin, assets, auth, experiences, hunt, qr
+from routers import admin, assets, auth, experiences, hunt, partner, qr
 
 # Le schéma de base est géré par Alembic (plus de create_all au démarrage) :
 # appliquer les migrations avec `alembic upgrade head` avant de lancer l'API.
@@ -33,6 +33,7 @@ app.include_router(qr.router)
 app.include_router(assets.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
+app.include_router(partner.router)
 app.include_router(hunt.router)
 
 # Sert les fichiers statiques (QR PNG générés, assets uploadés) sous /static.
