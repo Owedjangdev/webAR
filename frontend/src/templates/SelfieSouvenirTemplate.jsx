@@ -3,6 +3,7 @@ import { ArrowLeft, Camera, CameraOff, HelpCircle, MapPin, ShieldCheck, SwitchCa
 
 import { CameraStatus, FacingMode, useCamera } from '../hooks/useCamera.js'
 import { useCanvas } from '../hooks/useCanvas.js'
+import { trackCapture } from '../lib/api.js'
 import SouvenirScreen from '../components/SouvenirScreen.jsx'
 import ARTemplateShell from './ARTemplateShell.jsx'
 
@@ -21,7 +22,7 @@ const SHUTTER_HINT = 'Cadre ton visage dans le cadre, puis appuie sur le cercle 
  * Caméra plein écran + overlay décoratif + logo/lieu + message + capture.
  * Toute la logique média est dans les hooks useCamera / useCanvas.
  */
-export default function SelfieSouvenirTemplate({ place, assets, config }) {
+export default function SelfieSouvenirTemplate({ experienceId, place, assets, config }) {
   const { status, stream, facingMode, start, stop, flip } = useCamera()
   const { capture } = useCanvas()
   const [withoutCamera, setWithoutCamera] = useState(false)
@@ -43,6 +44,7 @@ export default function SelfieSouvenirTemplate({ place, assets, config }) {
     })
     if (image) {
       setLastCapture(image)
+      trackCapture(experienceId) // souvenir capturé : compté pour les stats partenaire
     }
     setSouvenir(image)
     setCaptureError(image === null)

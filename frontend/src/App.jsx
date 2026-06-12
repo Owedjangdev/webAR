@@ -10,6 +10,11 @@ import PartnersPage from './backoffice/pages/PartnersPage.jsx'
 import PlacesPage from './backoffice/pages/PlacesPage.jsx'
 import QrGenerationPage from './backoffice/pages/QrGenerationPage.jsx'
 import SettingsPage from './backoffice/pages/SettingsPage.jsx'
+import PartnerLayout from './partner/PartnerLayout.jsx'
+import PartnerDashboardPage from './partner/pages/PartnerDashboardPage.jsx'
+import PartnerPlacesPage from './partner/pages/PartnerPlacesPage.jsx'
+import PartnerQrPage from './partner/pages/PartnerQrPage.jsx'
+import PartnerStatsPage from './partner/pages/PartnerStatsPage.jsx'
 import ErrorPage from './pages/ErrorPage.jsx'
 import ExperiencePage from './pages/ExperiencePage.jsx'
 
@@ -17,6 +22,7 @@ import ExperiencePage from './pages/ExperiencePage.jsx'
  * Composant racine de l'application : définit le routing.
  * - Visiteur : `/webar?id=...` (expérience AR).
  * - Backoffice admin : `/admin/*` (login public + sous-routes protégées).
+ * - Espace partenaire : `/partner/*` (même login, rôle 'partner', lecture seule).
  */
 export default function App() {
   return (
@@ -45,6 +51,22 @@ export default function App() {
           <Route path="assets" element={<AssetsPage />} />
           <Route path="qr" element={<QrGenerationPage />} />
           <Route path="settings" element={<SettingsPage />} />
+        </Route>
+
+        {/* Espace partenaire (rôle 'partner', lecture seule). */}
+        <Route
+          path="/partner"
+          element={
+            <ProtectedRoute role="partner">
+              <PartnerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<PartnerDashboardPage />} />
+          <Route path="places" element={<PartnerPlacesPage />} />
+          <Route path="qr" element={<PartnerQrPage />} />
+          <Route path="stats" element={<PartnerStatsPage />} />
         </Route>
 
         {/* Toute autre route -> page d'erreur. */}

@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import ErrorScreen from '../components/ErrorScreen.jsx'
 import ExperienceScreen from '../components/ExperienceScreen.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
-import { fetchExperience } from '../lib/api.js'
+import { fetchExperience, trackScan } from '../lib/api.js'
 
 const MISSING_ID_MESSAGE =
   "Aucun identifiant d'expérience dans l'URL (ex. /webar?id=exp_001)."
@@ -32,7 +32,10 @@ export default function ExperiencePage() {
     let cancelled = false
     fetchExperience(experienceId)
       .then((experience) => {
-        if (!cancelled) setResult({ id: experienceId, experience })
+        if (cancelled) return
+        setResult({ id: experienceId, experience })
+        // Scan compté une fois l'expérience chargée avec succès (= ouverture via QR).
+        trackScan(experienceId)
       })
       .catch((error) => {
         if (!cancelled) setResult({ id: experienceId, error: error.message })

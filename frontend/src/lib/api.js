@@ -20,3 +20,28 @@ export async function fetchExperience(experienceId) {
   }
   return response.json()
 }
+
+/**
+ * Tracking analytique (alimente les statistiques du partenaire).
+ *
+ * Volontairement « fire-and-forget » : on n'interrompt JAMAIS le parcours
+ * visiteur si l'enregistrement échoue (réseau, expérience non publiée...). Les
+ * erreurs sont avalées. `keepalive` autorise l'envoi même si la page se ferme.
+ */
+function trackEvent(experienceId, kind) {
+  if (!experienceId) return
+  fetch(`${API_BASE_URL}/api/experience/${experienceId}/${kind}`, {
+    method: 'POST',
+    keepalive: true,
+  }).catch(() => {})
+}
+
+/** Enregistre un scan (ouverture de l'expérience via le QR code). */
+export function trackScan(experienceId) {
+  trackEvent(experienceId, 'scan')
+}
+
+/** Enregistre une capture de souvenir. */
+export function trackCapture(experienceId) {
+  trackEvent(experienceId, 'capture')
+}
