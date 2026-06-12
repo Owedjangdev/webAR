@@ -22,6 +22,7 @@ from models import (
     AssetType,
     BackOfficeUser,
     Experience,
+    ExperienceEvent,
     ExperienceStatus,
     Hunt,
     HuntStep,
@@ -299,6 +300,7 @@ def delete_experience(db: Session, public_id: str) -> None:
         db.execute(delete(HuntStep).where(HuntStep.hunt_id.in_(hunt_ids)))
         db.execute(delete(Hunt).where(Hunt.id.in_(hunt_ids)))
 
+    db.execute(delete(ExperienceEvent).where(ExperienceEvent.experience_id == experience.id))
     db.execute(delete(Asset).where(Asset.experience_id == experience.id))
     db.execute(delete(QrCode).where(QrCode.experience_id == experience.id))
     db.delete(experience)

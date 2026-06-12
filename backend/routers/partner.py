@@ -21,7 +21,8 @@ from deps import require_partner
 from models import BackOfficeUser, Experience, Place
 from schemas.admin import PlaceAdminOut
 from schemas.experience import ExperienceSummary
-from services import experience_service
+from schemas.stats import PartnerStatsOut
+from services import analytics_service, experience_service
 
 router = APIRouter(
     prefix="/api/partner",
@@ -55,3 +56,16 @@ def list_my_experiences(
         .where(Place.owner_id == current.id)
     ).all()
     return [experience_service.to_summary(exp) for exp in experiences]
+
+
+@router.get("/stats", response_model=PartnerStatsOut)
+def my_stats(
+    current: BackOfficeUser = Depends(require_partner),
+    db: Session = Depends(get_db),
+) -> PartnerStatsOut:
+    """Statistiques agrégées des lieux/expériences du partenaire connecté.
+
+    Totaux scans/captures, taux de conversion, détail par expérience et série
+    quotidienne (graphiques). Agrégation filtrée sur owner_id = current.id (A3).
+    """
+    return analytics_service.partner_stats(db, current.id)
