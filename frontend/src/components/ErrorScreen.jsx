@@ -42,7 +42,7 @@ export default function ErrorScreen({
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <span className="text-lg font-bold text-brand-600">Landmark Discovery</span>
+        <span className="text-lg font-bold text-brand-600">VisitAR Benin</span>
       </header>
 
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">

@@ -70,7 +70,7 @@ export default function Sidebar({ open, onClose }) {
               <Landmark className="h-5 w-5" />
             </span>
             <div className="leading-tight">
-              <p className="text-base font-bold text-white">Landmark</p>
+              <p className="text-base font-bold text-white">VisitAR Benin</p>
               <p className="text-xs text-slate-500">Backoffice</p>
             </div>
           </div>

@@ -27,7 +27,7 @@ export default function AdminLayout() {
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 text-white">
                 <Landmark className="h-3.5 w-3.5" />
               </span>
-              <span className="font-bold text-slate-800">Landmark</span>
+              <span className="font-bold text-slate-800">VisitAR Benin</span>
             </div>
           </header>
 

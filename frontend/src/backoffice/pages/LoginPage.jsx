@@ -57,7 +57,7 @@ export default function LoginPage() {
             <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-lg shadow-brand-500/30">
               <Landmark className="h-7 w-7" />
             </span>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Landmark</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">VisitAR Benin</h1>
             <p className="mt-1 text-sm text-slate-500">Connecte-toi à ton espace administrateur</p>
           </div>
 
@@ -113,7 +113,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <p className="mt-6 text-center text-xs text-slate-400">
-            WebAR Backoffice · Landmark
+            WebAR Backoffice · VisitAR Benin
           </p>
         </div>
       </div>
