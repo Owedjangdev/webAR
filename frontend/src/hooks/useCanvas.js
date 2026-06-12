@@ -33,28 +33,83 @@ function drawLogo(ctx, canvas, logo) {
   ctx.restore()
 }
 
+/** Rectangle à coins arrondis (via arcTo : compatible Chrome >= 80, pas de roundRect). */
+function roundRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2)
+  ctx.beginPath()
+  ctx.moveTo(x + radius, y)
+  ctx.arcTo(x + w, y, x + w, y + h, radius)
+  ctx.arcTo(x + w, y + h, x, y + h, radius)
+  ctx.arcTo(x, y + h, x, y, radius)
+  ctx.arcTo(x, y, x + w, y, radius)
+  ctx.closePath()
+}
+
+/** Découpe un texte en lignes tenant dans maxWidth (retour à la ligne par mots). */
+function wrapLines(ctx, text, maxWidth, maxLines) {
+  const lines = []
+  let current = ''
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    const candidate = current ? `${current} ${word}` : word
+    // On garde au moins un mot par ligne, même s'il dépasse (rare).
+    if (!current || ctx.measureText(candidate).width <= maxWidth) {
+      current = candidate
+    } else {
+      lines.push(current)
+      current = word
+    }
+  }
+  if (current) lines.push(current)
+
+  // Limite le nombre de lignes : la dernière est tronquée avec une ellipse.
+  if (lines.length > maxLines) {
+    lines.length = maxLines
+    let last = lines[maxLines - 1]
+    while (last && ctx.measureText(`${last}…`).width > maxWidth) {
+      last = last.slice(0, -1).trimEnd()
+    }
+    lines[maxLines - 1] = `${last}…`
+  }
+  return lines
+}
+
 /**
- * Dessine une légende (message souvenir) lisible en bas de l'image capturée.
+ * Dessine la légende (message souvenir) lisible EN BAS, centrée et retournée à la
+ * ligne dans un bandeau arrondi — ne déborde jamais de la largeur de l'image.
  */
 function drawCaption(ctx, canvas, text) {
-  const padding = Math.round(canvas.width * 0.04)
-  const fontSize = Math.round(canvas.width * 0.05)
+  const margin = Math.round(canvas.width * 0.05)
+  const fontSize = Math.round(canvas.width * 0.045)
+  const lineHeight = Math.round(fontSize * 1.3)
+  const padX = Math.round(fontSize * 0.8)
+  const padY = Math.round(fontSize * 0.55)
+  const maxTextWidth = canvas.width - margin * 2 - padX * 2
 
   ctx.font = `600 ${fontSize}px sans-serif`
   ctx.textAlign = 'center'
-  ctx.textBaseline = 'bottom'
+  ctx.textBaseline = 'middle'
 
-  const textWidth = ctx.measureText(text).width
-  const boxWidth = Math.min(canvas.width - padding, textWidth + padding * 2)
-  const boxHeight = fontSize + padding
+  const lines = wrapLines(ctx, text.trim(), maxTextWidth, 3)
+  if (lines.length === 0) return
+
+  const widest = Math.max(...lines.map((line) => ctx.measureText(line).width))
+  const boxWidth = Math.min(canvas.width - margin * 2, widest + padX * 2)
+  const boxHeight = lines.length * lineHeight + padY * 2
   const centerX = canvas.width / 2
-  const bottomY = canvas.height - padding
+  const boxTop = canvas.height - margin - boxHeight
+  const boxLeft = centerX - boxWidth / 2
 
-  // Bandeau sombre semi-transparent pour la lisibilité par-dessus la vidéo.
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)'
-  ctx.fillRect(centerX - boxWidth / 2, bottomY - boxHeight, boxWidth, boxHeight)
+  // Bandeau arrondi sombre (lisibilité par-dessus la vidéo / l'overlay).
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+  roundRect(ctx, boxLeft, boxTop, boxWidth, boxHeight, Math.round(boxHeight * 0.3))
+  ctx.fill()
+
+  // Lignes centrées, du haut du bandeau vers le bas.
   ctx.fillStyle = '#ffffff'
-  ctx.fillText(text, centerX, bottomY - padding / 2)
+  const firstLineY = boxTop + padY + lineHeight / 2
+  lines.forEach((line, index) => {
+    ctx.fillText(line, centerX, firstLineY + index * lineHeight)
+  })
 }
 
 /**
