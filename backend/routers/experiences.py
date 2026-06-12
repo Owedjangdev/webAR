@@ -5,14 +5,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Experience, ExperienceStatus
+from models import EventType, Experience, ExperienceStatus
 from schemas.experience import (
     ExperienceCreate,
     ExperienceDetail,
     ExperienceSummary,
     ExperienceUpdate,
 )
-from services import experience_service
+from services import analytics_service, experience_service
 
 router = APIRouter(prefix="/api", tags=["experiences"])
 
@@ -48,6 +48,25 @@ def get_experience(experience_id: str, db: Session = Depends(get_db)) -> Experie
             detail="Cette expérience n'est pas disponible.",
         )
     return experience_service.to_detail(experience)
+
+
+# --------------------------- Analytics (public) ----------------------------
+# Tracking anonyme alimentant les statistiques du partenaire. Endpoints POST
+# dédiés (et non un effet de bord sur le GET) : le GET reste pur/cacheable et le
+# comptage n'est pas pollué par les rechargements, aperçus de lien ou
+# prévisualisations admin. 404 si l'expérience n'est pas publiée.
+
+
+@router.post("/experience/{experience_id}/scan", status_code=status.HTTP_204_NO_CONTENT)
+def track_scan(experience_id: str, db: Session = Depends(get_db)) -> None:
+    """Enregistre un scan (ouverture de l'expérience via le QR code)."""
+    analytics_service.record_event(db, experience_id, EventType.scan)
+
+
+@router.post("/experience/{experience_id}/capture", status_code=status.HTTP_204_NO_CONTENT)
+def track_capture(experience_id: str, db: Session = Depends(get_db)) -> None:
+    """Enregistre une capture de souvenir."""
+    analytics_service.record_event(db, experience_id, EventType.capture)
 
 
 @router.post(
