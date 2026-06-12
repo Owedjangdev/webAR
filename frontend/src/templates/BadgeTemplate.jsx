@@ -53,7 +53,7 @@ export default function BadgeTemplate({ experienceId, place, assets, config }) {
     try {
       const result = await shareSouvenir(image, {
         title: `Badge ${place.name}`,
-        text: `J'ai débloqué le badge « ${place.name} » sur Landmark Discovery !`,
+        text: `J'ai débloqué le badge « ${place.name} » sur VisitAR Benin !`,
         filename: FILENAME,
       })
       if (result === 'shared') setNotice('Badge partagé')
