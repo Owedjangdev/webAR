@@ -20,8 +20,6 @@ const SPACES = [
   { role: 'partner', label: 'Partenaire', icon: Store, placeholder: 'partenaire@exemple.bj' },
 ]
 
-const ROLE_LABEL = { admin: 'Administrateur', partner: 'Partenaire' }
-
 export default function LoginPage() {
   const navigate = useNavigate()
   const [space, setSpace] = useState('admin') // espace choisi via le sélecteur
@@ -47,14 +45,10 @@ export default function LoginPage() {
     setError(null)
     setSubmitting(true)
     try {
-      const { access_token, role } = await login(email, password)
-      // Le rôle réel fait foi : il doit correspondre à l'espace sélectionné.
-      if (role !== space) {
-        setError(
-          `Ce compte est un compte ${ROLE_LABEL[role] ?? role}. Sélectionne l'espace correspondant.`,
-        )
-        return
-      }
+      // Le backend exige que le rôle corresponde à l'espace choisi : un mauvais
+      // onglet échoue avec « Identifiant incorrect. » (aucune fuite). On se
+      // contente d'afficher le message renvoyé et de rediriger selon le rôle.
+      const { access_token, role } = await login(email, password, space)
       saveSession(access_token, role, email)
       navigate(HOME[role] ?? '/login', { replace: true })
     } catch (err) {

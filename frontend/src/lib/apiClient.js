@@ -23,19 +23,19 @@ async function errorMessage(response) {
 }
 
 /**
- * Connexion : POST /api/login. Pas de Bearer ni de redirection auto — un 401
- * signifie simplement « identifiants invalides » (affiché par la page login).
+ * Connexion : POST /api/login. Pas de Bearer ni de redirection auto.
+ * `space` = l'espace choisi (onglet Admin/Partenaire) : le backend exige que le
+ * rôle du compte corresponde, sinon il renvoie « Identifiant incorrect. ». On
+ * remonte tel quel le message précis du backend (identifiant / mot de passe /
+ * compte désactivé) pour l'afficher sur la page de connexion.
  * @returns {Promise<{access_token: string, token_type: string, role: string}>}
  */
-export async function login(email, password) {
+export async function login(email, password, space) {
   const response = await fetch(`${API_BASE_URL}/api/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, space }),
   })
-  if (response.status === 401) {
-    throw new Error('Identifiants invalides.')
-  }
   if (!response.ok) {
     throw new Error(await errorMessage(response))
   }
