@@ -20,6 +20,11 @@ const SPACES = [
   { role: 'partner', label: 'Partenaire', icon: Store, placeholder: 'partenaire@exemple.bj' },
 ]
 
+// Validation email côté client (le formulaire est en noValidate) : on contrôle
+// nous-mêmes pour afficher un message EN FRANÇAIS, et non celui (en anglais) que
+// renverrait la validation Pydantic du backend.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const [space, setSpace] = useState('admin') // espace choisi via le sélecteur
@@ -43,14 +48,27 @@ export default function LoginPage() {
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError(null)
+
+    // Garde-fous en français avant l'appel API (sinon Pydantic renvoie un message
+    // en anglais, ex. « value is not a valid email address… »).
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail || !password) {
+      setError('Veuillez renseigner votre email et votre mot de passe.')
+      return
+    }
+    if (!EMAIL_RE.test(trimmedEmail)) {
+      setError('Veuillez saisir une adresse email valide.')
+      return
+    }
+
     setSubmitting(true)
     try {
       // Le backend exige que le rôle corresponde à l'espace choisi : un mauvais
       // onglet échoue avec « Identifiant incorrect. » (aucune fuite). On se
       // contente d'afficher le message renvoyé et de rediriger selon le rôle.
-      const { access_token, role } = await login(email, password, space)
+      const { access_token, role } = await login(trimmedEmail, password, space)
       saveSession(access_token, role, email)
-      navigate(HOME[role] ?? '/login', { replace: true })
+      navigate(HOME[role], { replace: true })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -148,7 +166,7 @@ export default function LoginPage() {
               className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 font-semibold text-white shadow-md shadow-brand-500/25 outline-none transition-all duration-200 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/30 focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
-              {submitting ? 'Connexion…' : `Se connecter `}
+              {submitting ? 'Connexion…' : 'Se connecter'}
             </button>
           </form>
 
