@@ -21,7 +21,7 @@ export default function SettingsPage() {
 
   const logout = () => {
     clearSession()
-    navigate('/admin/login', { replace: true })
+    navigate('/login', { replace: true })
   }
 
   return (

@@ -43,6 +43,7 @@ from schemas.experience import (
 _ASSET_TYPE_BY_KEY: dict[str, AssetType] = {
     "overlay_image": AssetType.overlay,
     "logo": AssetType.logo,
+    "badge": AssetType.badge,  # médaillon personnalisé du template 'badge'
 }
 
 # Libellé « contrat » d'un type d'asset (inverse), pour les messages d'erreur.
@@ -76,6 +77,7 @@ def _build_assets(experience: Experience) -> ExperienceAssets:
     return ExperienceAssets(
         overlay_image=url_by_type.get(AssetType.overlay),
         logo=url_by_type.get(AssetType.logo),
+        badge=url_by_type.get(AssetType.badge),
     )
 
 

@@ -19,7 +19,7 @@ export default function PartnerSidebar({ open, onClose }) {
 
   const logout = () => {
     clearSession()
-    navigate('/admin/login', { replace: true })
+    navigate('/login', { replace: true })
   }
 
   const linkClass = ({ isActive }) =>
