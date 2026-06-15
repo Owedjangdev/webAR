@@ -21,6 +21,10 @@ class ExperienceAssets(BaseModel):
 
     overlay_image: str | None = None
     logo: str | None = None
+    # Médaillon personnalisé du template 'badge' (optionnel) : chaque lieu peut
+    # uploader le sien via le back-office. Absent -> le template affiche son
+    # médaillon par défaut (rétrocompatible). Évolution du contrat actée en S5.
+    badge: str | None = None
 
 
 # ---------------------------------------------------------------------------
