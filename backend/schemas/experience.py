@@ -25,6 +25,9 @@ class ExperienceAssets(BaseModel):
     # uploader le sien via le back-office. Absent -> le template affiche son
     # médaillon par défaut (rétrocompatible). Évolution du contrat actée en S5.
     badge: str | None = None
+    # Modèle 3D (.glb) du template 'object_ar' : l'objet/plat que le visiteur fait
+    # tourner. Absent -> repli sur la scène procédurale. Évolution actée en S6.
+    model: str | None = None
 
 
 # ---------------------------------------------------------------------------

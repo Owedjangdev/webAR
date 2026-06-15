@@ -40,6 +40,7 @@ _ALLOWED_EXTENSIONS: dict[AssetType, set[str]] = {
     AssetType.badge: {".png", ".jpg", ".jpeg", ".webp"},
     AssetType.image: {".png", ".jpg", ".jpeg", ".webp", ".gif"},
     AssetType.audio: {".mp3", ".ogg", ".wav", ".m4a"},
+    AssetType.model: {".glb"},  # modèle 3D self-contained (object_ar)
 }
 
 router = APIRouter(

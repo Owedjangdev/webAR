@@ -28,6 +28,7 @@ class AssetType(str, enum.Enum):
     badge = "badge"
     image = "image"
     audio = "audio"
+    model = "model"  # modèle 3D (.glb) du template object_ar — objet à faire tourner
 
 
 class Asset(Base):
