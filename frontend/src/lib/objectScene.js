@@ -1,4 +1,6 @@
 import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 // Scène 3D PROCÉDURALE (aucun modèle à charger) : un objet facetté lumineux,
 // enveloppé d'un halo en fil de fer et d'un nuage de particules, le tout à la
@@ -111,6 +113,164 @@ export function createObjectScene(canvas, { color = '#10B981' } = {}) {
       wire.material.dispose()
       particleGeometry.dispose()
       particles.material.dispose()
+      renderer.dispose()
+      renderer.forceContextLoss?.()
+    },
+  }
+}
+
+// --------------------------------------------------------------------------
+// Viewer de MODÈLE 3D (template object_ar « à la AR Code ») : charge un .glb et
+// laisse le visiteur le faire TOURNER (OrbitControls), avec auto-rotation au
+// repos, éclairage neutre et fond dégradé sombre (pour faire ressortir l'objet).
+// --------------------------------------------------------------------------
+
+/** Texture de fond : dégradé vertical sombre (capturé dans le souvenir). */
+function gradientBackground(top, bottom) {
+  const c = document.createElement('canvas')
+  c.width = 4
+  c.height = 256
+  const ctx = c.getContext('2d')
+  const grad = ctx.createLinearGradient(0, 0, 0, 256)
+  grad.addColorStop(0, top)
+  grad.addColorStop(1, bottom)
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, 4, 256)
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
+  return tex
+}
+
+/** Centre le modèle à l'origine et le met à l'échelle pour qu'il tienne au cadre. */
+function frameModel(model, controls, camera) {
+  const box = new THREE.Box3().setFromObject(model)
+  const size = box.getSize(new THREE.Vector3())
+  const center = box.getCenter(new THREE.Vector3())
+  model.position.sub(center) // recentre sur (0,0,0)
+  const maxDim = Math.max(size.x, size.y, size.z) || 1
+  model.scale.setScalar(1.6 / maxDim) // normalise la taille (~1.6 unités)
+  controls.target.set(0, 0, 0)
+  camera.position.set(0, 0.5, 3.2)
+  controls.update()
+}
+
+/** Libère récursivement la mémoire GPU d'un modèle (géométries, matériaux, textures). */
+function disposeModel(model) {
+  model.traverse((child) => {
+    if (!child.isMesh) return
+    child.geometry?.dispose()
+    const materials = Array.isArray(child.material) ? child.material : [child.material]
+    for (const mat of materials) {
+      if (!mat) continue
+      for (const value of Object.values(mat)) {
+        if (value?.isTexture) value.dispose()
+      }
+      mat.dispose()
+    }
+  })
+}
+
+/**
+ * Monte un viewer de modèle 3D sur un canvas opaque (fond dégradé).
+ *
+ * @param {HTMLCanvasElement} canvas
+ * @param {{ modelUrl: string, onLoaded?: () => void, onError?: (e:any) => void }} options
+ * @returns {{ dispose: () => void, capturePng: () => (string|null) }}
+ */
+export function createModelViewer(canvas, { modelUrl, onLoaded, onError } = {}) {
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    preserveDrawingBuffer: true, // capture du souvenir via toDataURL
+  })
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+  renderer.outputColorSpace = THREE.SRGBColorSpace
+
+  const scene = new THREE.Scene()
+  scene.background = gradientBackground('#1e293b', '#0b1220')
+
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100)
+  camera.position.set(0, 0.5, 3.2)
+
+  // Éclairage neutre et doux : on veut voir les vraies couleurs du modèle.
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.15))
+  const key = new THREE.DirectionalLight(0xffffff, 1.7)
+  key.position.set(3, 5, 4)
+  scene.add(key)
+  const fill = new THREE.DirectionalLight(0xffffff, 0.6)
+  fill.position.set(-4, 1, -3)
+  scene.add(fill)
+
+  const controls = new OrbitControls(camera, canvas)
+  controls.enableDamping = true
+  controls.dampingFactor = 0.08
+  controls.enablePan = false // on tourne/zoome, on ne déplace pas
+  controls.minDistance = 1.6
+  controls.maxDistance = 8
+  controls.autoRotate = true
+  controls.autoRotateSpeed = 1.4
+
+  // Auto-rotation en pause pendant que le visiteur manipule, reprise après 3 s.
+  let idleTimer = null
+  controls.addEventListener('start', () => {
+    controls.autoRotate = false
+    if (idleTimer) clearTimeout(idleTimer)
+  })
+  controls.addEventListener('end', () => {
+    idleTimer = setTimeout(() => {
+      controls.autoRotate = true
+    }, 3000)
+  })
+
+  let model = null
+  new GLTFLoader().load(
+    modelUrl,
+    (gltf) => {
+      model = gltf.scene
+      frameModel(model, controls, camera)
+      scene.add(model)
+      onLoaded?.()
+    },
+    undefined,
+    (err) => onError?.(err),
+  )
+
+  const resize = () => {
+    const width = canvas.clientWidth || 1
+    const height = canvas.clientHeight || 1
+    renderer.setSize(width, height, false)
+    camera.aspect = width / height
+    camera.updateProjectionMatrix()
+  }
+  resize()
+  const observer = new ResizeObserver(resize)
+  observer.observe(canvas)
+
+  let frame = 0
+  const animate = () => {
+    controls.update()
+    renderer.render(scene, camera)
+    frame = requestAnimationFrame(animate)
+  }
+  animate()
+
+  return {
+    /** Image PNG du rendu courant (null si impossible/tainté). */
+    capturePng() {
+      try {
+        renderer.render(scene, camera)
+        return canvas.toDataURL('image/png')
+      } catch {
+        return null
+      }
+    },
+    dispose() {
+      cancelAnimationFrame(frame)
+      if (idleTimer) clearTimeout(idleTimer)
+      observer.disconnect()
+      controls.dispose()
+      if (model) disposeModel(model)
+      scene.background?.dispose?.()
       renderer.dispose()
       renderer.forceContextLoss?.()
     },
