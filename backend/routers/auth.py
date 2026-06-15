@@ -1,6 +1,6 @@
 """Endpoint d'authentification du backoffice (préfixe /api)."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -15,14 +15,10 @@ router = APIRouter(prefix="/api", tags=["auth"])
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
     """Authentifie un compte backoffice et renvoie un JWT + son rôle.
 
-    401 si l'email est inconnu OU le mot de passe incorrect (message volontairement
-    générique : on ne révèle pas lequel des deux est faux).
+    auth_service.authenticate lève une HTTPException explicite selon le cas
+    (401 identifiant/mot de passe, 403 compte désactivé) ; « mauvais espace »
+    (onglet) est traité comme un identifiant incorrect, sans rien révéler.
     """
-    user = auth_service.authenticate(db, payload.email, payload.password)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Identifiants invalides.",
-        )
+    user = auth_service.authenticate(db, payload.email, payload.password, payload.space)
     token = create_access_token(subject=str(user.id), role=user.role.value)
     return TokenResponse(access_token=token, role=user.role)
