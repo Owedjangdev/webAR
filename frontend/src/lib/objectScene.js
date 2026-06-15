@@ -125,22 +125,6 @@ export function createObjectScene(canvas, { color = '#10B981' } = {}) {
 // repos, éclairage neutre et fond dégradé sombre (pour faire ressortir l'objet).
 // --------------------------------------------------------------------------
 
-/** Texture de fond : dégradé vertical sombre (capturé dans le souvenir). */
-function gradientBackground(top, bottom) {
-  const c = document.createElement('canvas')
-  c.width = 4
-  c.height = 256
-  const ctx = c.getContext('2d')
-  const grad = ctx.createLinearGradient(0, 0, 0, 256)
-  grad.addColorStop(0, top)
-  grad.addColorStop(1, bottom)
-  ctx.fillStyle = grad
-  ctx.fillRect(0, 0, 4, 256)
-  const tex = new THREE.CanvasTexture(c)
-  tex.colorSpace = THREE.SRGBColorSpace
-  return tex
-}
-
 /** Centre le modèle à l'origine et le met à l'échelle pour qu'il tienne au cadre. */
 function frameModel(model, controls, camera) {
   const box = new THREE.Box3().setFromObject(model)
@@ -181,13 +165,13 @@ export function createModelViewer(canvas, { modelUrl, onLoaded, onError } = {}) 
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
+    alpha: true, // fond transparent : la caméra arrière reste visible derrière (AR)
     preserveDrawingBuffer: true, // capture du souvenir via toDataURL
   })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
   renderer.outputColorSpace = THREE.SRGBColorSpace
 
   const scene = new THREE.Scene()
-  scene.background = gradientBackground('#1e293b', '#0b1220')
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100)
   camera.position.set(0, 0.5, 3.2)
@@ -270,7 +254,6 @@ export function createModelViewer(canvas, { modelUrl, onLoaded, onError } = {}) 
       observer.disconnect()
       controls.dispose()
       if (model) disposeModel(model)
-      scene.background?.dispose?.()
       renderer.dispose()
       renderer.forceContextLoss?.()
     },
