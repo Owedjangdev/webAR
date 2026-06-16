@@ -8,6 +8,7 @@ import { isObjectDiscovered, markObjectDiscovered } from '../lib/discoveryStorag
 import SouvenirScreen from '../components/SouvenirScreen.jsx'
 import ARTemplateShell from './ARTemplateShell.jsx'
 import ObjectARScene from './ObjectARScene.jsx'
+import ObjectModelViewer from './ObjectModelViewer.jsx'
 
 // Couleur d'accent par défaut (émeraude) : identité visuelle du template object_ar.
 const DEFAULT_ACCENT = '#10B981'
@@ -36,7 +37,22 @@ function readProduct(place, config) {
  * révéler une fiche produit (title/description/price), peut capturer la vue, et
  * voit un indicateur « Découvert » au retour (persisté en localStorage).
  */
-export default function ObjectInteractiveTemplate({ experienceId, place, assets, config }) {
+/**
+ * Aiguillage du template object_ar :
+ * - si l'expérience fournit un modèle 3D (`assets.model`) → viewer rotatif (à la
+ *   AR Code : on fait tourner le vrai objet) ;
+ * - sinon → expérience caméra interactive (CameraObjectExperience, historique).
+ * Le branchement est ici (et pas via des hooks conditionnels) pour respecter les
+ * règles des hooks : chaque sous-composant possède ses propres hooks.
+ */
+export default function ObjectInteractiveTemplate(props) {
+  if (props.assets?.model) {
+    return <ObjectModelViewer {...props} />
+  }
+  return <CameraObjectExperience {...props} />
+}
+
+function CameraObjectExperience({ experienceId, place, assets, config }) {
   const { status, stream, start, stop } = useCamera()
   const { capture } = useCanvas()
   const product = readProduct(place, config)
