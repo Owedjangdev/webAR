@@ -45,3 +45,42 @@ export function trackScan(experienceId) {
 export function trackCapture(experienceId) {
   trackEvent(experienceId, 'capture')
 }
+
+// --------------------------------------------------------------------------
+// Chasse au trésor (template treasure_hunt) — endpoints publics visiteur.
+// --------------------------------------------------------------------------
+
+/** Charge la chasse d'une expérience : titre, étapes (indices), total. */
+export async function getHunt(experienceId) {
+  const response = await fetch(`${API_BASE_URL}/api/hunt/${experienceId}`)
+  if (response.status === 404) {
+    throw new Error('Aucune chasse au trésor disponible pour cette expérience.')
+  }
+  if (!response.ok) {
+    throw new Error(`Erreur serveur (${response.status}).`)
+  }
+  return response.json()
+}
+
+/** Progression de la session anonyme (pour reprendre au bon endroit). */
+export async function getHuntProgress(experienceId, sessionToken) {
+  const query = new URLSearchParams({ session_token: sessionToken })
+  const response = await fetch(`${API_BASE_URL}/api/hunt/${experienceId}/progress?${query}`)
+  if (!response.ok) {
+    throw new Error(`Erreur serveur (${response.status}).`)
+  }
+  return response.json()
+}
+
+/** Valide un code d'étape (scanné ou saisi) pour la session anonyme. */
+export async function validateHuntStep(experienceId, sessionToken, code) {
+  const response = await fetch(`${API_BASE_URL}/api/hunt/step/validate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ experience_id: experienceId, session_token: sessionToken, code }),
+  })
+  if (!response.ok) {
+    throw new Error(`Erreur serveur (${response.status}).`)
+  }
+  return response.json()
+}

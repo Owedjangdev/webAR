@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { Download, QrCode } from 'lucide-react'
+import { Compass, Download, QrCode } from 'lucide-react'
 
 import { API_BASE_URL } from '../../lib/api.js'
 import { getPartnerExperiences } from '../../lib/partnerApi.js'
+import Button from '../../backoffice/components/Button.jsx'
+import HuntQrCodes from '../../backoffice/components/HuntQrCodes.jsx'
+import Modal from '../../backoffice/components/Modal.jsx'
 import PageHeader from '../../backoffice/components/PageHeader.jsx'
 import StatusBadge from '../../backoffice/components/StatusBadge.jsx'
 import { EmptyState, ErrorState, Loader } from '../../backoffice/components/feedback.jsx'
@@ -10,6 +13,7 @@ import { useApiResource } from '../../backoffice/hooks/useApiResource.js'
 
 export default function PartnerQrPage() {
   const { data, loading, error } = useApiResource(getPartnerExperiences)
+  const [huntExpId, setHuntExpId] = useState(null) // chasse dont on affiche les QR
 
   if (loading) return <Loader />
   if (error) return <ErrorState message={error} />
@@ -30,18 +34,31 @@ export default function PartnerQrPage() {
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {expList.map((exp) => (
-            <QrCard key={exp.experience_id} experience={exp} />
+            <QrCard key={exp.experience_id} experience={exp} onOpenHunt={setHuntExpId} />
           ))}
         </div>
       )}
+
+      {/* Tous les QR d'une chasse (départ + étapes) + impression. */}
+      <Modal
+        open={huntExpId !== null}
+        title={`QR de la chasse — ${huntExpId ?? ''}`}
+        onClose={() => setHuntExpId(null)}
+      >
+        {huntExpId && (
+          <HuntQrCodes experienceId={huntExpId} basePath="/api/partner/hunt" printable />
+        )}
+      </Modal>
     </div>
   )
 }
 
-/** Carte d'une expérience : aperçu du QR (repli si non généré) + téléchargement. */
-function QrCard({ experience }) {
+/** Carte d'une expérience : aperçu du QR de départ + téléchargement, et pour une
+ *  chasse, un accès aux QR de toutes les étapes (à imprimer). */
+function QrCard({ experience, onOpenHunt }) {
   const [unavailable, setUnavailable] = useState(false)
   const id = experience.experience_id
+  const isHunt = experience.template === 'treasure_hunt'
   const imgSrc = `${API_BASE_URL}/api/qr/${id}`
 
   return (
@@ -80,11 +97,17 @@ function QrCard({ experience }) {
             href={imgSrc}
             target="_blank"
             rel="noreferrer"
-            className="mt-auto inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/30 hover:brightness-110"
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/30 hover:brightness-110"
           >
             <Download className="h-4 w-4" />
-            Télécharger PNG
+            QR de départ
           </a>
+        )}
+
+        {isHunt && (
+          <Button variant="outline" icon={Compass} onClick={() => onOpenHunt(id)} className="w-full">
+            QR de la chasse (départ + étapes)
+          </Button>
         )}
       </div>
     </div>
