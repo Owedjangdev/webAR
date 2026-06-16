@@ -74,6 +74,27 @@ export const apiPut = (path, body) => adminRequest('PUT', path, body)
 export const apiDelete = (path) => adminRequest('DELETE', path)
 
 /**
+ * GET binaire authentifié (Bearer) → ObjectURL. Pour afficher/télécharger des
+ * images protégées par auth (ex. QR d'étape de chasse, qui contiennent un code
+ * secret) : un <img src> ne peut pas porter l'en-tête Authorization, on passe
+ * donc par fetch → blob → URL.createObjectURL. Penser à URL.revokeObjectURL.
+ */
+export async function apiGetObjectUrl(path) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: { Authorization: `Bearer ${getToken() ?? ''}` },
+  })
+  if (response.status === 401) {
+    clearSession()
+    window.location.assign('/login')
+    throw new Error('Session expirée, reconnecte-toi.')
+  }
+  if (!response.ok) {
+    throw new Error(await errorMessage(response))
+  }
+  return URL.createObjectURL(await response.blob())
+}
+
+/**
  * Upload d'un fichier (multipart) vers le backend — utilisé pour le logo depuis
  * le bureau. ⚠️ L'endpoint `POST /api/admin/assets/upload` n'existe PAS encore
  * côté backend : le front est prêt, la route reste à ajouter (cf. rappel).

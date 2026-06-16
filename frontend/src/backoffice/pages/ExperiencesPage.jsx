@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Images, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { Compass, Images, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 
 import { apiDelete, apiGet, apiPut } from '../../lib/apiClient.js'
 import { assetLabel, getTemplateConfig } from '../config/templateConfig.js'
 import AssetManager from '../components/AssetManager.jsx'
 import Button from '../components/Button.jsx'
+import HuntBuilder from '../components/HuntBuilder.jsx'
 import ExperienceEditForm from '../components/ExperienceEditForm.jsx'
 import ExperienceForm from '../components/ExperienceForm.jsx'
 import Modal from '../components/Modal.jsx'
@@ -24,6 +25,7 @@ export default function ExperiencesPage() {
   const [creating, setCreating] = useState(false)
   const [assetReminder, setAssetReminder] = useState(null)
   const [assetsExpId, setAssetsExpId] = useState(null)
+  const [huntExpId, setHuntExpId] = useState(null)
   const [editExp, setEditExp] = useState(null)
   const [deleteExp, setDeleteExp] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
@@ -127,6 +129,16 @@ export default function ExperiencesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-1">
+                        {exp.template === 'treasure_hunt' && (
+                          <Button
+                            variant="ghost"
+                            icon={Compass}
+                            aria-label={`Configurer la chasse de ${exp.experience_id}`}
+                            title="Configurer la chasse au trésor"
+                            className="!px-2"
+                            onClick={() => setHuntExpId(exp.experience_id)}
+                          />
+                        )}
                         <Button
                           variant="ghost"
                           icon={Images}
@@ -186,6 +198,14 @@ export default function ExperiencesPage() {
       </Modal>
 
       <Modal
+        open={huntExpId !== null}
+        title={`Chasse au trésor — ${huntExpId ?? ''}`}
+        onClose={() => setHuntExpId(null)}
+      >
+        {huntExpId && <HuntBuilder experienceId={huntExpId} />}
+      </Modal>
+
+      <Modal
         open={editExp !== null}
         title={`Modifier ${editExp?.experience_id ?? ''}`}
         onClose={() => setEditExp(null)}
@@ -233,7 +253,7 @@ export default function ExperiencesPage() {
         {assetReminder && (
           <div className="space-y-4">
             <p className="text-sm text-slate-600">
-              ✅ L'expérience <strong>{assetReminder.publicId}</strong> a été créée en{' '}
+               L'expérience <strong>{assetReminder.publicId}</strong> a été créée en{' '}
               <strong>brouillon</strong>. Ce template a besoin d'assets pour fonctionner
               correctement.
             </p>
