@@ -14,6 +14,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Path,
     Request,
     Response,
     UploadFile,
@@ -250,7 +251,11 @@ def upsert_admin_hunt(
 
 
 @router.get("/hunt/{public_id}/step/{step_order}/qr.png")
-def admin_step_qr(public_id: str, step_order: int, db: Session = Depends(get_db)) -> Response:
+def admin_step_qr(
+    public_id: str,
+    step_order: int = Path(ge=1),
+    db: Session = Depends(get_db),
+) -> Response:
     """Image PNG du QR d'une étape (encode /webar?id=...&step=CODE), à imprimer.
 
     Réservé admin : ce QR contient le code secret de l'étape — il ne doit pas être
@@ -258,7 +263,13 @@ def admin_step_qr(public_id: str, step_order: int, db: Session = Depends(get_db)
     """
     code = hunt_service.get_step_code(db, public_id, step_order)
     png = qr_service.qr_png_bytes(qr_service.build_step_url(public_id, code))
-    return Response(content=png, media_type="image/png")
+    # no-store/private : le QR contient le code secret → on interdit toute mise en
+    # cache (navigateur/proxy) pour limiter les fuites.
+    return Response(
+        content=png,
+        media_type="image/png",
+        headers={"Cache-Control": "no-store, private"},
+    )
 
 
 # ----------------------------- Upload d'asset (fichier) --------------------
