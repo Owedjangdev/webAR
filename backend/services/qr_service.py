@@ -4,6 +4,7 @@ Isole ici (et pas dans le router) toute la génération QR, pour rester propre e
 réutilisable (CLAUDE.md section 18).
 """
 
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -29,6 +30,27 @@ def build_experience_url(public_id: str) -> str:
     """Construit l'URL publique de l'expérience encodée dans le QR code."""
     base = settings.frontend_base_url.rstrip("/")
     return f"{base}{_EXPERIENCE_PATH}?{urlencode({'id': public_id})}"
+
+
+def build_step_url(public_id: str, code: str) -> str:
+    """URL encodée dans le QR d'une ÉTAPE de chasse : /webar?id=...&step=CODE.
+
+    Scanné sur place, ce QR ouvre l'app avec le code de l'étape, qui est validé
+    automatiquement (cf. parcours chasse au trésor).
+    """
+    base = settings.frontend_base_url.rstrip("/")
+    return f"{base}{_EXPERIENCE_PATH}?{urlencode({'id': public_id, 'step': code})}"
+
+
+def qr_png_bytes(url: str) -> bytes:
+    """Rend un QR code en PNG (octets en mémoire), sans rien persister.
+
+    Utilisé pour servir à la volée les QR d'étapes (téléchargement/impression),
+    sans créer de fichier ni de ligne en base.
+    """
+    buffer = BytesIO()
+    qrcode.make(url).save(buffer, format="PNG")
+    return buffer.getvalue()
 
 
 def _relative_image_path(public_id: str) -> str:
