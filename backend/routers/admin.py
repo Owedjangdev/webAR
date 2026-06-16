@@ -8,7 +8,18 @@ Règle métier : seul l'administrateur crée des lieux/expériences et les publi
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
+from fastapi import Path as PathParam  # alias : 'Path' est déjà pathlib.Path ici
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -26,8 +37,16 @@ from schemas.admin import (
 from security import hash_password, verify_password
 from schemas.asset import AssetCreate, AssetOut
 from schemas.experience import ExperienceCreate, ExperienceSummary
+from schemas.hunt import HuntAdminDetail, HuntUpsert
 from schemas.partner import PartnerCreate, PartnerOut
-from services import asset_service, experience_service, partner_service, place_service
+from services import (
+    asset_service,
+    experience_service,
+    hunt_service,
+    partner_service,
+    place_service,
+    qr_service,
+)
 
 # Dossier de stockage des fichiers uploadés (servi sous /static/uploads).
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "static" / "uploads"
@@ -206,6 +225,51 @@ def get_admin_experience(public_id: str, db: Session = Depends(get_db)) -> Exper
 def delete_admin_experience(public_id: str, db: Session = Depends(get_db)) -> None:
     """Supprime une expérience et ses assets / QR code. **404** si inexistante."""
     experience_service.delete_experience(db, public_id)
+
+
+# ----------------- Chasse au trésor (configuration + QR étapes) ------------
+
+
+@router.get("/hunt/{public_id}", response_model=HuntAdminDetail)
+def get_admin_hunt(public_id: str, db: Session = Depends(get_db)) -> HuntAdminDetail:
+    """Détail de la chasse d'une expérience (codes inclus, pour générer les QR).
+
+    **422** si l'expérience n'est pas une chasse ; **404** si aucune chasse n'est
+    encore configurée (le front affiche alors un formulaire vide).
+    """
+    return hunt_service.get_hunt_admin(db, public_id)
+
+
+@router.put("/hunt/{public_id}", response_model=HuntAdminDetail)
+def upsert_admin_hunt(
+    public_id: str, payload: HuntUpsert, db: Session = Depends(get_db)
+) -> HuntAdminDetail:
+    """Crée ou remplace la chasse (1..N étapes). Les codes sont auto-générés et
+    conservés par ordre pour ne pas invalider les QR déjà imprimés. **404**
+    expérience inconnue ; **422** si elle n'est pas une chasse."""
+    return hunt_service.upsert_hunt(db, public_id, payload)
+
+
+@router.get("/hunt/{public_id}/step/{step_order}/qr.png")
+def admin_step_qr(
+    public_id: str,
+    step_order: int = PathParam(ge=1),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Image PNG du QR d'une étape (encode /webar?id=...&step=CODE), à imprimer.
+
+    Réservé admin : ce QR contient le code secret de l'étape — il ne doit pas être
+    public (sinon on validerait la chasse sans se déplacer). 404 si étape inconnue.
+    """
+    code = hunt_service.get_step_code(db, public_id, step_order)
+    png = qr_service.qr_png_bytes(qr_service.build_step_url(public_id, code))
+    # no-store/private : le QR contient le code secret → on interdit toute mise en
+    # cache (navigateur/proxy) pour limiter les fuites.
+    return Response(
+        content=png,
+        media_type="image/png",
+        headers={"Cache-Control": "no-store, private"},
+    )
 
 
 # ----------------------------- Upload d'asset (fichier) --------------------

@@ -8,7 +8,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from database import get_db
-from schemas.hunt import HuntDetail, StepValidationRequest, StepValidationResponse
+from schemas.hunt import (
+    HuntDetail,
+    HuntProgress,
+    StepValidationRequest,
+    StepValidationResponse,
+)
 from services import hunt_service
 
 router = APIRouter(prefix="/api", tags=["hunt"])
@@ -23,6 +28,18 @@ def get_hunt(experience_id: str, db: Session = Depends(get_db)) -> HuntDetail:
     """
     hunt = hunt_service.get_published_hunt(db, experience_id)
     return hunt_service.to_detail(hunt)
+
+
+@router.get("/hunt/{experience_id}/progress", response_model=HuntProgress)
+def hunt_progress(
+    experience_id: str, session_token: str, db: Session = Depends(get_db)
+) -> HuntProgress:
+    """Progression de la session (pour reprendre au bon endroit au rechargement).
+
+    `session_token` = identifiant anonyme côté client. Lecture seule (n'avance rien).
+    404 si la chasse n'est pas disponible.
+    """
+    return hunt_service.get_progress(db, experience_id, session_token)
 
 
 @router.post("/hunt/step/validate", response_model=StepValidationResponse)

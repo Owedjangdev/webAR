@@ -12,7 +12,8 @@ Le partenaire est en lecture seule : il consulte ses lieux et expériences, il n
 crée/modifie rien (c'est l'administrateur qui gère).
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import Path as PathParam
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -21,8 +22,29 @@ from deps import require_partner
 from models import BackOfficeUser, Experience, Place
 from schemas.admin import PlaceAdminOut
 from schemas.experience import ExperienceSummary
+from schemas.hunt import HuntAdminDetail
 from schemas.stats import PartnerStatsOut
-from services import analytics_service, experience_service
+from services import analytics_service, experience_service, hunt_service, qr_service
+
+
+def _owned_experience_or_404(
+    db: Session, current: BackOfficeUser, public_id: str
+) -> Experience:
+    """Retourne l'expérience SI elle appartient à un lieu du partenaire (scénario A3).
+
+    404 sinon : on ne révèle pas l'existence d'une expérience d'un autre partenaire.
+    """
+    experience = db.scalar(
+        select(Experience)
+        .join(Place, Experience.place_id == Place.id)
+        .where(Experience.public_id == public_id, Place.owner_id == current.id)
+    )
+    if experience is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Expérience introuvable ou non rattachée à ton compte.",
+        )
+    return experience
 
 router = APIRouter(
     prefix="/api/partner",
@@ -69,3 +91,40 @@ def my_stats(
     quotidienne (graphiques). Agrégation filtrée sur owner_id = current.id (A3).
     """
     return analytics_service.partner_stats(db, current.id)
+
+
+# ----------------- Chasse au trésor : QR à télécharger/imprimer ------------
+
+
+@router.get("/hunt/{public_id}", response_model=HuntAdminDetail)
+def my_hunt(
+    public_id: str,
+    current: BackOfficeUser = Depends(require_partner),
+    db: Session = Depends(get_db),
+) -> HuntAdminDetail:
+    """Détail de la chasse d'une de SES expériences (titre, récompense, étapes +
+    codes) pour télécharger/imprimer les QR. 404 si l'expérience n'est pas à lui."""
+    _owned_experience_or_404(db, current, public_id)
+    return hunt_service.get_hunt_admin(db, public_id)
+
+
+@router.get("/hunt/{public_id}/step/{step_order}/qr.png")
+def my_step_qr(
+    public_id: str,
+    step_order: int = PathParam(ge=1),
+    current: BackOfficeUser = Depends(require_partner),
+    db: Session = Depends(get_db),
+) -> Response:
+    """PNG du QR d'une étape d'une de SES chasses (à coller sur place).
+
+    Réservé au partenaire propriétaire ; anti-cache car le QR contient le code
+    secret de l'étape.
+    """
+    _owned_experience_or_404(db, current, public_id)
+    code = hunt_service.get_step_code(db, public_id, step_order)
+    png = qr_service.qr_png_bytes(qr_service.build_step_url(public_id, code))
+    return Response(
+        content=png,
+        media_type="image/png",
+        headers={"Cache-Control": "no-store, private"},
+    )

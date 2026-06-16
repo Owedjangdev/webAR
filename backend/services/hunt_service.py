@@ -6,15 +6,30 @@ Centralise ici (et nulle part ailleurs) :
 - la validation d'étape avec anti-triche (ordre imposé), pour garder le router mince.
 """
 
+import secrets
+import string
+
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from models import AnonymousSession, Experience, ExperienceStatus, Hunt
-from schemas.hunt import HuntDetail, HuntStepOut, StepValidationResponse
+from models import AnonymousSession, Experience, ExperienceStatus, Hunt, HuntStep
+from schemas.hunt import (
+    HuntAdminDetail,
+    HuntDetail,
+    HuntProgress,
+    HuntStepAdminOut,
+    HuntStepOut,
+    HuntUpsert,
+    StepValidationResponse,
+)
 
 # Une chasse n'existe que pour une expérience de ce template.
 _TREASURE_HUNT_TEMPLATE = "treasure_hunt"
+
+# Codes de validation auto-générés (encodés dans les QR d'étapes).
+_STEP_CODE_LENGTH = 6
+_STEP_CODE_ALPHABET = string.ascii_uppercase + string.digits
 
 
 def get_published_hunt(db: Session, experience_public_id: str) -> Hunt:
@@ -46,6 +61,31 @@ def to_detail(hunt: Hunt) -> HuntDetail:
         title=hunt.title,
         total_steps=len(hunt.steps),
         steps=[HuntStepOut.model_validate(step) for step in hunt.steps],
+    )
+
+
+def get_progress(
+    db: Session, experience_public_id: str, session_token: str
+) -> HuntProgress:
+    """Progression d'une session sur une chasse publiée (pour reprendre).
+
+    Pas de session encore = pas commencé (0). N'avance rien (lecture seule).
+    """
+    hunt = get_published_hunt(db, experience_public_id)
+    total_steps = len(hunt.steps)
+    session = db.scalar(
+        select(AnonymousSession).where(
+            AnonymousSession.session_token == session_token,
+            AnonymousSession.hunt_id == hunt.id,
+        )
+    )
+    if session is None:
+        return HuntProgress(current_step=0, total_steps=total_steps, completed=False)
+    return HuntProgress(
+        current_step=session.current_step,
+        total_steps=total_steps,
+        completed=session.completed,
+        reward=hunt.reward_message if session.completed else None,
     )
 
 
@@ -128,3 +168,120 @@ def validate_step(
         total_steps=total_steps,
         message=f"Étape {session.current_step} validée.",
     )
+
+
+# ---------------------------------------------------------------------------
+# Administration de la chasse (réservé /api/admin/*). Nombre d'étapes LIBRE.
+# ---------------------------------------------------------------------------
+
+
+def _get_treasure_experience_or_404(db: Session, experience_public_id: str) -> Experience:
+    """Retourne l'expérience si elle existe ET est de template treasure_hunt.
+
+    404 si inconnue ; 422 si l'expérience n'est pas une chasse (mauvais template).
+    """
+    experience = db.scalar(
+        select(Experience).where(Experience.public_id == experience_public_id)
+    )
+    if experience is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Expérience '{experience_public_id}' introuvable.",
+        )
+    if experience.template != _TREASURE_HUNT_TEMPLATE:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Cette expérience n'est pas une chasse au trésor (template 'treasure_hunt').",
+        )
+    return experience
+
+
+def _generate_step_code(used: set[str]) -> str:
+    """Génère un code de validation unique (parmi `used`)."""
+    while True:
+        code = "".join(secrets.choice(_STEP_CODE_ALPHABET) for _ in range(_STEP_CODE_LENGTH))
+        if code not in used:
+            used.add(code)
+            return code
+
+
+def to_admin_detail(hunt: Hunt) -> HuntAdminDetail:
+    """Sérialise une chasse pour l'admin (codes inclus, pour générer les QR)."""
+    return HuntAdminDetail(
+        title=hunt.title,
+        reward_message=hunt.reward_message,
+        total_steps=len(hunt.steps),
+        steps=[HuntStepAdminOut.model_validate(step) for step in hunt.steps],
+    )
+
+
+def get_hunt_admin(db: Session, experience_public_id: str) -> HuntAdminDetail:
+    """Retourne la chasse (codes inclus) d'une expérience treasure_hunt.
+
+    404 si l'expérience n'a pas encore de chasse configurée (le front affiche un
+    formulaire vide).
+    """
+    experience = _get_treasure_experience_or_404(db, experience_public_id)
+    if experience.hunt is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Aucune chasse configurée pour cette expérience.",
+        )
+    return to_admin_detail(experience.hunt)
+
+
+def upsert_hunt(
+    db: Session, experience_public_id: str, payload: HuntUpsert
+) -> HuntAdminDetail:
+    """Crée ou remplace la chasse d'une expérience treasure_hunt (1..N étapes).
+
+    Les codes des étapes existantes sont CONSERVÉS par ordre (pour ne pas invalider
+    les QR déjà imprimés) ; les nouvelles étapes reçoivent un code généré.
+    """
+    experience = _get_treasure_experience_or_404(db, experience_public_id)
+
+    hunt = experience.hunt
+    if hunt is None:
+        hunt = Hunt(
+            experience_id=experience.id,
+            title=payload.title,
+            reward_message=payload.reward_message,
+        )
+        db.add(hunt)
+        db.flush()
+        existing_codes_by_order: dict[int, str] = {}
+    else:
+        hunt.title = payload.title
+        hunt.reward_message = payload.reward_message
+        # Mémorise les codes par ordre avant de remplacer les étapes.
+        existing_codes_by_order = {s.step_order: s.validation_code for s in hunt.steps}
+        hunt.steps.clear()
+        db.flush()  # applique la suppression avant de ré-insérer (contrainte d'ordre)
+
+    used: set[str] = set(existing_codes_by_order.values())
+    for index, step in enumerate(payload.steps, start=1):
+        code = existing_codes_by_order.get(index) or _generate_step_code(used)
+        hunt.steps.append(
+            HuntStep(step_order=index, title=step.title, hint=step.hint, validation_code=code)
+        )
+
+    db.commit()
+    db.refresh(hunt)
+    return to_admin_detail(hunt)
+
+
+def get_step_code(db: Session, experience_public_id: str, step_order: int) -> str:
+    """Retourne le validation_code d'une étape (pour générer son QR). 404 sinon."""
+    experience = _get_treasure_experience_or_404(db, experience_public_id)
+    if experience.hunt is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Aucune chasse configurée pour cette expérience.",
+        )
+    step = next((s for s in experience.hunt.steps if s.step_order == step_order), None)
+    if step is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Étape {step_order} introuvable.",
+        )
+    return step.validation_code
