@@ -3,7 +3,7 @@
 // - BarRow    : barre horizontale proportionnelle (détail par expérience).
 
 const BRAND = '#4f46e5' // scans (indigo de marque)
-const EMERALD = '#10b981' // captures
+const CAPTURE = '#f59e0b' // captures (ambre, pour distinguer de l'indigo des scans)
 
 /**
  * Courbe d'évolution à deux séries sur un repère normalisé (viewBox 0..100 x
@@ -71,7 +71,7 @@ export function LineChart({ data }) {
         />
         <polyline
           fill="none"
-          stroke={EMERALD}
+          stroke={CAPTURE}
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -90,7 +90,7 @@ export function LineChart({ data }) {
       {/* Légende. */}
       <div className="mt-3 flex items-center justify-center gap-5 text-xs font-medium text-slate-600">
         <Legend color={BRAND} label="Scans" />
-        <Legend color={EMERALD} label="Captures" />
+        <Legend color={CAPTURE} label="Captures" />
       </div>
     </div>
   )

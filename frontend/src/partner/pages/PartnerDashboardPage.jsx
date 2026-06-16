@@ -48,7 +48,7 @@ export default function PartnerDashboardPage() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon={MapPin} label="Mes lieux" value={placeList.length} accent="brand" />
         <StatCard icon={Sparkles} label="Expériences" value={expList.length} accent="brand" />
-        <StatCard icon={ScanLine} label="Scans" value={statsData?.total_scans ?? '—'} accent="emerald" />
+        <StatCard icon={ScanLine} label="Scans" value={statsData?.total_scans ?? '—'} accent="brand" />
         <StatCard icon={Camera} label="Captures" value={statsData?.total_captures ?? '—'} accent="amber" />
       </div>
 

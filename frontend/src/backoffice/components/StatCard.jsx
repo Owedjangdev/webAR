@@ -4,7 +4,6 @@ export default function StatCard({ icon: Icon, label, value, accent = 'brand' })
   const iconAccent =
     {
       brand: 'bg-brand-50 text-brand-600',
-      emerald: 'bg-emerald-50 text-emerald-600',
       amber: 'bg-amber-50 text-amber-600',
     }[accent] ?? 'bg-brand-50 text-brand-600'
 

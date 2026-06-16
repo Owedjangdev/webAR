@@ -30,7 +30,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard icon={MapPin} label="Lieux" value={placeList.length} accent="brand" />
         <StatCard icon={Sparkles} label="Expériences" value={expList.length} accent="brand" />
-        <StatCard icon={CheckCircle2} label="Publiées" value={publishedCount} accent="emerald" />
+        <StatCard icon={CheckCircle2} label="Publiées" value={publishedCount} accent="brand" />
       </div>
 
       <section className="mt-8 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
