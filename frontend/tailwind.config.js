@@ -21,8 +21,6 @@ export default {
           900: '#312e81',
           950: '#1e1b4b',
         },
-        // Fond clair de l'application (gris-bleu très pâle, comme Aurora).
-        canvas: '#f3f4fb',
       },
       // Animations (transform/opacity uniquement → GPU, fluides sur mobile faible).
       keyframes: {
