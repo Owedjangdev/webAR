@@ -114,7 +114,7 @@ export function BarRow({ label, sublabel, value, max, color = BRAND }) {
         <p className="truncate text-sm font-medium text-slate-700">{label}</p>
         {sublabel && <p className="truncate text-xs text-slate-400">{sublabel}</p>}
       </div>
-      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
         <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
       <span className="w-10 text-right text-sm font-semibold tabular-nums text-slate-700">{value}</span>
