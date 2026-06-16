@@ -2,8 +2,8 @@
 // - LineChart : série temporelle à deux courbes (scans / captures).
 // - BarRow    : barre horizontale proportionnelle (détail par expérience).
 
-const BRAND = '#2563eb' // scans
-const EMERALD = '#10b981' // captures
+const BRAND = '#4f46e5' // scans (indigo de marque)
+const CAPTURE = '#f59e0b' // captures (ambre, pour distinguer de l'indigo des scans)
 
 /**
  * Courbe d'évolution à deux séries sur un repère normalisé (viewBox 0..100 x
@@ -45,7 +45,9 @@ export function LineChart({ data }) {
         role="img"
         aria-label="Évolution des scans et captures"
       >
-        {/* Lignes de repère horizontales (0 %, 50 %, 100 %). */}
+        {/* Lignes de repère horizontales (0 %, 50 %, 100 %).
+            vectorEffect=non-scaling-stroke : épaisseur en pixels réels malgré le
+            viewBox étiré (preserveAspectRatio=none) → traits fins et nets. */}
         {[0, 0.5, 1].map((r) => (
           <line
             key={r}
@@ -53,16 +55,27 @@ export function LineChart({ data }) {
             x2="100"
             y1={H - r * H}
             y2={H - r * H}
-            stroke="#e2e8f0"
-            strokeWidth="0.3"
+            stroke="#eef0f6"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
           />
         ))}
-        <polyline fill="none" stroke={BRAND} strokeWidth="0.8" strokeLinejoin="round" points={toLine('scans')} />
         <polyline
           fill="none"
-          stroke={EMERALD}
-          strokeWidth="0.8"
+          stroke={BRAND}
+          strokeWidth="2"
+          strokeLinecap="round"
           strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+          points={toLine('scans')}
+        />
+        <polyline
+          fill="none"
+          stroke={CAPTURE}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
           points={toLine('captures')}
         />
       </svg>
@@ -77,7 +90,7 @@ export function LineChart({ data }) {
       {/* Légende. */}
       <div className="mt-3 flex items-center justify-center gap-5 text-xs font-medium text-slate-600">
         <Legend color={BRAND} label="Scans" />
-        <Legend color={EMERALD} label="Captures" />
+        <Legend color={CAPTURE} label="Captures" />
       </div>
     </div>
   )
@@ -101,7 +114,7 @@ export function BarRow({ label, sublabel, value, max, color = BRAND }) {
         <p className="truncate text-sm font-medium text-slate-700">{label}</p>
         {sublabel && <p className="truncate text-xs text-slate-400">{sublabel}</p>}
       </div>
-      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
         <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
       <span className="w-10 text-right text-sm font-semibold tabular-nums text-slate-700">{value}</span>

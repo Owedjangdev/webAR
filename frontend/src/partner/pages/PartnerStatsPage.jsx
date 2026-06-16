@@ -37,7 +37,7 @@ export default function PartnerStatsPage() {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon={ScanLine} label="Total scans" value={stats.total_scans} accent="brand" />
-        <StatCard icon={Camera} label="Total captures" value={stats.total_captures} accent="emerald" />
+        <StatCard icon={Camera} label="Total captures" value={stats.total_captures} accent="brand" />
         <StatCard icon={Percent} label="Taux de capture" value={`${conversionPct} %`} accent="amber" />
         <StatCard
           icon={TrendingUp}

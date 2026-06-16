@@ -44,7 +44,7 @@ export function useToast() {
 }
 
 const STYLES = {
-  success: { icon: CheckCircle2, border: 'border-emerald-200', iconClass: 'text-emerald-500' },
+  success: { icon: CheckCircle2, border: 'border-brand-200', iconClass: 'text-brand-500' },
   error: { icon: TriangleAlert, border: 'border-red-200', iconClass: 'text-red-500' },
   info: { icon: Info, border: 'border-brand-200', iconClass: 'text-brand-500' },
 }

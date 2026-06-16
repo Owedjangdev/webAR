@@ -1,5 +1,5 @@
 const STYLES = {
-  published: { label: 'Publiée', dot: 'bg-emerald-500', className: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' },
+  published: { label: 'Publiée', dot: 'bg-brand-500', className: 'bg-brand-50 text-brand-700 ring-brand-600/20' },
   draft: { label: 'Brouillon', dot: 'bg-amber-500', className: 'bg-amber-50 text-amber-700 ring-amber-600/20' },
 }
 

@@ -11,7 +11,7 @@ export default function PublishToggle({ published, loading, onToggle }) {
     >
       <span
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 group-focus-visible:ring-2 group-focus-visible:ring-brand-300 group-focus-visible:ring-offset-2 ${
-          published ? 'bg-emerald-500' : 'bg-slate-300'
+          published ? 'bg-brand-600' : 'bg-slate-300'
         } ${loading ? 'opacity-60' : ''}`}
       >
         <span
@@ -21,7 +21,7 @@ export default function PublishToggle({ published, loading, onToggle }) {
         />
       </span>
       <span
-        className={`text-xs font-semibold transition-colors duration-200 ${published ? 'text-emerald-700' : 'text-slate-400'}`}
+        className={`text-xs font-semibold transition-colors duration-200 ${published ? 'text-brand-700' : 'text-slate-400'}`}
       >
         {loading ? '…' : published ? 'Publiée' : 'Brouillon'}
       </span>
