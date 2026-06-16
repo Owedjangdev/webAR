@@ -2,7 +2,7 @@
 // - LineChart : série temporelle à deux courbes (scans / captures).
 // - BarRow    : barre horizontale proportionnelle (détail par expérience).
 
-const BRAND = '#2563eb' // scans
+const BRAND = '#4f46e5' // scans (indigo de marque)
 const EMERALD = '#10b981' // captures
 
 /**
@@ -45,7 +45,9 @@ export function LineChart({ data }) {
         role="img"
         aria-label="Évolution des scans et captures"
       >
-        {/* Lignes de repère horizontales (0 %, 50 %, 100 %). */}
+        {/* Lignes de repère horizontales (0 %, 50 %, 100 %).
+            vectorEffect=non-scaling-stroke : épaisseur en pixels réels malgré le
+            viewBox étiré (preserveAspectRatio=none) → traits fins et nets. */}
         {[0, 0.5, 1].map((r) => (
           <line
             key={r}
@@ -53,16 +55,27 @@ export function LineChart({ data }) {
             x2="100"
             y1={H - r * H}
             y2={H - r * H}
-            stroke="#e2e8f0"
-            strokeWidth="0.3"
+            stroke="#eef0f6"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
           />
         ))}
-        <polyline fill="none" stroke={BRAND} strokeWidth="0.8" strokeLinejoin="round" points={toLine('scans')} />
+        <polyline
+          fill="none"
+          stroke={BRAND}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+          points={toLine('scans')}
+        />
         <polyline
           fill="none"
           stroke={EMERALD}
-          strokeWidth="0.8"
+          strokeWidth="2"
+          strokeLinecap="round"
           strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
           points={toLine('captures')}
         />
       </svg>
