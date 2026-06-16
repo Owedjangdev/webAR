@@ -10,7 +10,7 @@ export default function PartnerLayout() {
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-slate-100/80">
+      <div className="min-h-screen bg-canvas">
         <PartnerSidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
 
         <div className="lg:pl-64">
