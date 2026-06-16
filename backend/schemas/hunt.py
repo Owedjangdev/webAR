@@ -95,3 +95,16 @@ class HuntAdminDetail(BaseModel):
     reward_message: str
     total_steps: int
     steps: list[HuntStepAdminOut]
+
+
+class HuntProgress(BaseModel):
+    """Progression d'une session anonyme (pour reprendre au bon endroit).
+
+    Le serveur fait foi : le frontend affiche l'indice de `current_step + 1`.
+    """
+
+    current_step: int  # nombre d'étapes validées (0 = pas commencé)
+    total_steps: int
+    completed: bool
+    # Récompense : renseignée seulement si la chasse est terminée.
+    reward: str | None = None

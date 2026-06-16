@@ -17,6 +17,7 @@ from models import AnonymousSession, Experience, ExperienceStatus, Hunt, HuntSte
 from schemas.hunt import (
     HuntAdminDetail,
     HuntDetail,
+    HuntProgress,
     HuntStepAdminOut,
     HuntStepOut,
     HuntUpsert,
@@ -60,6 +61,31 @@ def to_detail(hunt: Hunt) -> HuntDetail:
         title=hunt.title,
         total_steps=len(hunt.steps),
         steps=[HuntStepOut.model_validate(step) for step in hunt.steps],
+    )
+
+
+def get_progress(
+    db: Session, experience_public_id: str, session_token: str
+) -> HuntProgress:
+    """Progression d'une session sur une chasse publiée (pour reprendre).
+
+    Pas de session encore = pas commencé (0). N'avance rien (lecture seule).
+    """
+    hunt = get_published_hunt(db, experience_public_id)
+    total_steps = len(hunt.steps)
+    session = db.scalar(
+        select(AnonymousSession).where(
+            AnonymousSession.session_token == session_token,
+            AnonymousSession.hunt_id == hunt.id,
+        )
+    )
+    if session is None:
+        return HuntProgress(current_step=0, total_steps=total_steps, completed=False)
+    return HuntProgress(
+        current_step=session.current_step,
+        total_steps=total_steps,
+        completed=session.completed,
+        reward=hunt.reward_message if session.completed else None,
     )
 
 
