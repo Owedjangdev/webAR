@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 
 // Scène 3D PROCÉDURALE (aucun modèle à charger) : un objet facetté lumineux,
 // enveloppé d'un halo en fil de fer et d'un nuage de particules, le tout à la
@@ -207,7 +208,10 @@ export function createModelViewer(canvas, { modelUrl, onLoaded, onError } = {}) 
   })
 
   let model = null
-  new GLTFLoader().load(
+  // setMeshoptDecoder : supporte les .glb compressés en meshopt (modèles légers
+  // produits par gltf-transform/optimisation). Sans lui, la géométrie compressée
+  // ne se décode pas.
+  new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load(
     modelUrl,
     (gltf) => {
       model = gltf.scene
