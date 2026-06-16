@@ -14,12 +14,12 @@ from fastapi import (
     File,
     Form,
     HTTPException,
-    Path,
     Request,
     Response,
     UploadFile,
     status,
 )
+from fastapi import Path as PathParam  # alias : 'Path' est déjà pathlib.Path ici
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -253,7 +253,7 @@ def upsert_admin_hunt(
 @router.get("/hunt/{public_id}/step/{step_order}/qr.png")
 def admin_step_qr(
     public_id: str,
-    step_order: int = Path(ge=1),
+    step_order: int = PathParam(ge=1),
     db: Session = Depends(get_db),
 ) -> Response:
     """Image PNG du QR d'une étape (encode /webar?id=...&step=CODE), à imprimer.
