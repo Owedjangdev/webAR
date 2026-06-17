@@ -33,6 +33,20 @@ function drawLogo(ctx, canvas, logo) {
   ctx.restore()
 }
 
+/**
+ * Dessine le personnage 2D (template guide_narratif) ancré en BAS et centré,
+ * en conservant ses proportions — reproduit sa position à l'écran pour que le
+ * souvenir capturé corresponde à ce que voit le visiteur.
+ */
+function drawCharacter(ctx, canvas, character) {
+  const targetH = Math.round(canvas.height * 0.62)
+  const ratio = targetH / character.naturalHeight
+  const w = character.naturalWidth * ratio
+  const x = Math.round((canvas.width - w) / 2)
+  const y = canvas.height - targetH
+  ctx.drawImage(character, x, y, w, targetH)
+}
+
 /** Rectangle à coins arrondis (via arcTo : compatible Chrome >= 80, pas de roundRect). */
 function roundRect(ctx, x, y, w, h, r) {
   const radius = Math.min(r, w / 2, h / 2)
@@ -122,7 +136,7 @@ function drawCaption(ctx, canvas, text) {
 export function useCanvas() {
   const canvasRef = useRef(null)
 
-  const capture = useCallback((video, { overlay, overlayCanvas, logo, message, mirror = false } = {}) => {
+  const capture = useCallback((video, { overlay, overlayCanvas, character, logo, message, mirror = false } = {}) => {
     if (!video?.videoWidth) {
       return null
     }
@@ -148,6 +162,11 @@ export function useCanvas() {
     // sans miroir, par-dessus la vidéo. Ignorée si absente (autres templates).
     if (overlayCanvas?.width > 0 && overlayCanvas?.height > 0) {
       ctx.drawImage(overlayCanvas, 0, 0, canvas.width, canvas.height)
+    }
+
+    // Personnage 2D (template guide_narratif), ancré en bas comme à l'écran.
+    if (character?.complete && character.naturalWidth > 0) {
+      drawCharacter(ctx, canvas, character)
     }
 
     // Overlay décoratif (seulement s'il est bien chargé).
