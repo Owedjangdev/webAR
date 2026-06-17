@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     # Affiche les requêtes SQL dans la console (utile en dev, à laisser à false en prod).
     sql_echo: bool = False
 
+    # Certificat CA pour le TLS de la base managée (ex. Aiven, qui IMPOSE le SSL).
+    # Chemin relatif à backend/ ou absolu (ex. "ca.pem"). Absent -> connexion sans
+    # TLS (MySQL local en dev).
+    db_ssl_ca: str | None = None
+
     # Stockage des médias uploadés sur Cloudinary (URL fournie par le Dashboard :
     # cloudinary://API_KEY:API_SECRET@CLOUD_NAME). Absente -> repli disque local
     # (dev). En prod (disque éphémère type Render), elle est REQUISE.
