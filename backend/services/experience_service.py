@@ -45,6 +45,8 @@ _ASSET_TYPE_BY_KEY: dict[str, AssetType] = {
     "logo": AssetType.logo,
     "badge": AssetType.badge,  # médaillon personnalisé du template 'badge'
     "model": AssetType.model,  # modèle 3D (.glb) du template 'object_ar'
+    "character": AssetType.image,  # personnage 2D du template 'guide_narratif'
+    "narration_audio": AssetType.audio,  # narration du template 'guide_narratif'
 }
 
 # Libellé « contrat » d'un type d'asset (inverse), pour les messages d'erreur.
@@ -80,6 +82,8 @@ def _build_assets(experience: Experience) -> ExperienceAssets:
         logo=url_by_type.get(AssetType.logo),
         badge=url_by_type.get(AssetType.badge),
         model=url_by_type.get(AssetType.model),
+        character=url_by_type.get(AssetType.image),
+        narration_audio=url_by_type.get(AssetType.audio),
     )
 
 

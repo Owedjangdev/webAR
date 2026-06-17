@@ -28,6 +28,12 @@ class ExperienceAssets(BaseModel):
     # Modèle 3D (.glb) du template 'object_ar' : l'objet/plat que le visiteur fait
     # tourner. Absent -> repli sur la scène procédurale. Évolution actée en S6.
     model: str | None = None
+    # Personnage 2D (image) du template 'guide_narratif', superposé à la caméra.
+    # Absent -> avatar par défaut du template (rétrocompatible). Évolution S6.
+    character: str | None = None
+    # Audio de narration du template 'guide_narratif' (lecture au tap). Absent ->
+    # narration texte seule (le cahier dit « audio OU texte »). Évolution S6.
+    narration_audio: str | None = None
 
 
 # ---------------------------------------------------------------------------
