@@ -70,7 +70,13 @@ export const TEMPLATE_CONFIG = {
     requiresAssets: false,
     assetsNeeded: [],
   },
-  capsule_collective: messageTemplate('Capsule collective', 'Message', 'Laisse un mot pour les prochains visiteurs…'),
+  // Le cadre commun = assets.overlay_image (réutilisé) ; optionnel, repli sans
+  // cadre -> pas bloquant pour publier (template simplifié).
+  capsule_collective: messageTemplate(
+    'Capsule collective',
+    'Message collectif (incrusté dans la photo)',
+    'Ensemble au Palais d’Abomey 💛',
+  ),
   portal_ar: messageTemplate('Portail AR', 'Message', 'Franchis le portail…'),
 }
 

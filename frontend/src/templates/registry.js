@@ -1,4 +1,5 @@
 import BadgeTemplate from './BadgeTemplate.jsx'
+import CapsuleCollectiveTemplate from './CapsuleCollectiveTemplate.jsx'
 import GuideNarratifTemplate from './GuideNarratifTemplate.jsx'
 import ObjectInteractiveTemplate from './ObjectInteractiveTemplate.jsx'
 import SelfieSouvenirTemplate from './SelfieSouvenirTemplate.jsx'
@@ -18,6 +19,7 @@ const TEMPLATE_REGISTRY = {
   object_ar: ObjectInteractiveTemplate,
   treasure_hunt: TreasureHuntTemplate,
   guide_narratif: GuideNarratifTemplate,
+  capsule_collective: CapsuleCollectiveTemplate,
 }
 
 /**
