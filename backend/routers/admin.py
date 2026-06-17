@@ -41,6 +41,7 @@ from schemas.hunt import HuntAdminDetail, HuntUpsert
 from schemas.partner import PartnerCreate, PartnerOut
 from services import (
     asset_service,
+    cloudinary_service,
     experience_service,
     hunt_service,
     partner_service,
@@ -312,16 +313,26 @@ async def upload_asset(
             detail="Fichier trop volumineux (max 10 Mo).",
         )
 
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    filename = f"{uuid.uuid4().hex}{suffix}"
-    file_path = UPLOAD_DIR / filename
-    file_path.write_bytes(content)
+    # Stockage du média : Cloudinary si configuré (stockage permanent + CDN, requis
+    # en prod sur disque éphémère), sinon repli disque local (dev).
+    cloud_media: dict | None = None
+    local_file: Path | None = None
+    if cloudinary_service.is_enabled():
+        cloud_media = cloudinary_service.upload(
+            content,
+            public_id=uuid.uuid4().hex,
+            resource_type=cloudinary_service.resource_type_for(type),
+        )
+        url = cloud_media["url"]
+    else:
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        local_file = UPLOAD_DIR / f"{uuid.uuid4().hex}{suffix}"
+        local_file.write_bytes(content)
+        # URL absolue servie par le backend (ex. http://localhost:8000/static/uploads/x.png).
+        url = f"{str(request.base_url).rstrip('/')}/static/uploads/{local_file.name}"
 
-    # URL absolue servie par le backend (ex. http://localhost:8000/static/uploads/x.png).
-    url = f"{str(request.base_url).rstrip('/')}/static/uploads/{filename}"
-
-    # Si la création de l'asset échoue (404 lieu/expérience, 422, erreur BDD),
-    # on supprime le fichier déjà écrit pour ne pas laisser d'orphelin sur disque.
+    # Si la création de l'asset échoue (404 lieu/expérience, 422, erreur BDD), on
+    # supprime le média déjà stocké pour ne pas laisser d'orphelin.
     try:
         asset = asset_service.create_asset(
             db,
@@ -334,7 +345,10 @@ async def upload_asset(
             ),
         )
     except Exception:
-        file_path.unlink(missing_ok=True)
+        if cloud_media is not None:
+            cloudinary_service.destroy(cloud_media["public_id"], cloud_media["resource_type"])
+        if local_file is not None:
+            local_file.unlink(missing_ok=True)
         raise
 
     return asset_service.to_out(asset)

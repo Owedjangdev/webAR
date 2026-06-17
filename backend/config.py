@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     # Affiche les requêtes SQL dans la console (utile en dev, à laisser à false en prod).
     sql_echo: bool = False
 
+    # Stockage des médias uploadés sur Cloudinary (URL fournie par le Dashboard :
+    # cloudinary://API_KEY:API_SECRET@CLOUD_NAME). Absente -> repli disque local
+    # (dev). En prod (disque éphémère type Render), elle est REQUISE.
+    cloudinary_url: str | None = None
+
     # --- Authentification backoffice (JWT) ---
     # Clé secrète de signature des jetons (OBLIGATOIRE, lue depuis .env, jamais en dur).
     # min_length : refuse une clé vide ou trop courte → l'app ne démarre pas avec un
