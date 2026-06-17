@@ -77,7 +77,13 @@ export const TEMPLATE_CONFIG = {
     'Message collectif (incrusté dans la photo)',
     'Ensemble au Palais d’Abomey 💛',
   ),
-  portal_ar: messageTemplate('Portail AR', 'Message', 'Franchis le portail…'),
+  // La scène de destination = assets.overlay_image (réutilisé) ; optionnelle,
+  // repli portail voilé -> pas bloquant pour publier (template simplifié).
+  portal_ar: messageTemplate(
+    'Portail AR',
+    'Message (incrusté dans la photo)',
+    'Franchis le portail vers Ouidah…',
+  ),
 }
 
 // Repli pour un template non reconnu : message + couleur, sans assets (ne plante pas).
