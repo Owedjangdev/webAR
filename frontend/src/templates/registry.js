@@ -2,6 +2,7 @@ import BadgeTemplate from './BadgeTemplate.jsx'
 import CapsuleCollectiveTemplate from './CapsuleCollectiveTemplate.jsx'
 import GuideNarratifTemplate from './GuideNarratifTemplate.jsx'
 import ObjectInteractiveTemplate from './ObjectInteractiveTemplate.jsx'
+import PortalARTemplate from './PortalARTemplate.jsx'
 import SelfieSouvenirTemplate from './SelfieSouvenirTemplate.jsx'
 import TreasureHuntTemplate from './TreasureHuntTemplate.jsx'
 import UnknownTemplate from './UnknownTemplate.jsx'
@@ -20,6 +21,7 @@ const TEMPLATE_REGISTRY = {
   treasure_hunt: TreasureHuntTemplate,
   guide_narratif: GuideNarratifTemplate,
   capsule_collective: CapsuleCollectiveTemplate,
+  portal_ar: PortalARTemplate,
 }
 
 /**

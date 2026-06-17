@@ -46,6 +46,11 @@ export default {
           '0%': { transform: 'translateY(10px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
+        // Zoom lent de la scène du portail (effet de profondeur, va-et-vient).
+        'portal-drift': {
+          '0%, 100%': { transform: 'scale(1.05)' },
+          '50%': { transform: 'scale(1.18)' },
+        },
       },
       animation: {
         equalize: 'equalize 1s ease-in-out infinite',
@@ -53,6 +58,7 @@ export default {
         'badge-pop': 'badge-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both',
         'badge-burst': 'badge-burst 1.1s ease-out both',
         'rise-in': 'rise-in 0.5s ease-out 0.15s both',
+        'portal-drift': 'portal-drift 12s ease-in-out infinite',
       },
     },
   },

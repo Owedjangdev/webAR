@@ -59,6 +59,42 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
+/**
+ * Dessine le portail (template portal_ar) : une « porte » arrondie au centre,
+ * à travers laquelle on voit la scène de destination (image), entourée d'un
+ * anneau lumineux. Reproduit l'effet affiché à l'écran dans le souvenir capturé.
+ * `scene` peut être null -> seul l'anneau (portail voilé) est dessiné.
+ */
+function drawPortal(ctx, canvas, scene) {
+  const pw = canvas.width * 0.64
+  const ph = canvas.height * 0.62
+  const x = (canvas.width - pw) / 2
+  const y = canvas.height * 0.12
+  const r = pw * 0.16
+
+  // Scène de destination, découpée dans la forme du portail (cover).
+  if (scene?.complete && scene.naturalWidth > 0) {
+    ctx.save()
+    roundRect(ctx, x, y, pw, ph, r)
+    ctx.clip()
+    const ratio = Math.max(pw / scene.naturalWidth, ph / scene.naturalHeight)
+    const sw = scene.naturalWidth * ratio
+    const sh = scene.naturalHeight * ratio
+    ctx.drawImage(scene, x + (pw - sw) / 2, y + (ph - sh) / 2, sw, sh)
+    ctx.restore()
+  }
+
+  // Anneau lumineux du portail (indigo brand + halo).
+  ctx.save()
+  roundRect(ctx, x, y, pw, ph, r)
+  ctx.lineWidth = Math.max(4, canvas.width * 0.012)
+  ctx.strokeStyle = '#a5b4fc'
+  ctx.shadowColor = '#6366f1'
+  ctx.shadowBlur = canvas.width * 0.05
+  ctx.stroke()
+  ctx.restore()
+}
+
 /** Découpe un texte en lignes tenant dans maxWidth (retour à la ligne par mots). */
 function wrapLines(ctx, text, maxWidth, maxLines) {
   const lines = []
@@ -136,7 +172,7 @@ function drawCaption(ctx, canvas, text) {
 export function useCanvas() {
   const canvasRef = useRef(null)
 
-  const capture = useCallback((video, { overlay, overlayCanvas, character, logo, message, mirror = false } = {}) => {
+  const capture = useCallback((video, { overlay, overlayCanvas, character, portal, logo, message, mirror = false } = {}) => {
     if (!video?.videoWidth) {
       return null
     }
@@ -167,6 +203,12 @@ export function useCanvas() {
     // Personnage 2D (template guide_narratif), ancré en bas comme à l'écran.
     if (character?.complete && character.naturalWidth > 0) {
       drawCharacter(ctx, canvas, character)
+    }
+
+    // Portail (template portal_ar) : porte arrondie + scène + anneau lumineux.
+    // `portal === true` -> portail voilé (scène absente, anneau seul).
+    if (portal) {
+      drawPortal(ctx, canvas, portal === true ? null : portal)
     }
 
     // Overlay décoratif (seulement s'il est bien chargé).
