@@ -58,7 +58,18 @@ export const TEMPLATE_CONFIG = {
     requiresAssets: false,
     assetsNeeded: [],
   },
-  guide_narratif: messageTemplate('Guide narratif', 'Message', 'Bienvenue dans la visite…'),
+  guide_narratif: {
+    label: 'Guide narratif',
+    fields: [
+      { name: 'title', label: 'Nom du guide', type: 'text', placeholder: 'Kossi, gardien du palais', required: false },
+      { name: 'narration', label: 'Récit (texte de narration)', type: 'textarea', placeholder: "Raconte l'histoire du lieu…", required: true },
+      colorField,
+    ],
+    // Personnage et audio sont optionnels (repli avatar + texte) : pas bloquant
+    // pour publier, conformément au statut « simplifié » du template.
+    requiresAssets: false,
+    assetsNeeded: [],
+  },
   capsule_collective: messageTemplate('Capsule collective', 'Message', 'Laisse un mot pour les prochains visiteurs…'),
   portal_ar: messageTemplate('Portail AR', 'Message', 'Franchis le portail…'),
 }
@@ -78,6 +89,8 @@ export const FALLBACK_CONFIG = {
 const ASSET_LABELS = {
   overlay_image: 'Overlay (image AR superposée)',
   logo: 'Logo',
+  character: 'Personnage 2D (guide)',
+  narration_audio: 'Audio de narration',
 }
 
 /** Clés de templates connues, pour alimenter la liste déroulante (ordre stable). */
