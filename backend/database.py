@@ -12,15 +12,17 @@ _BACKEND_DIR = Path(__file__).resolve().parent
 
 
 def build_connect_args() -> dict:
-    """Arguments de connexion du driver. Active le TLS vérifié par CA si DB_SSL_CA
-    est défini — requis par les bases managées type Aiven. Sans cette variable
-    (MySQL local en dev), connexion simple sans TLS. Réutilisé par Alembic."""
-    if not settings.db_ssl_ca:
-        return {}
-    ca_path = Path(settings.db_ssl_ca)
-    if not ca_path.is_absolute():
-        ca_path = _BACKEND_DIR / ca_path
-    return {"ssl": {"ca": str(ca_path)}}
+    """Arguments de connexion du driver. Échec rapide (connect_timeout) si la base
+    managée est injoignable, et TLS vérifié par CA si DB_SSL_CA est défini (requis
+    par Aiven). Sans cette variable (MySQL local en dev), connexion sans TLS.
+    Réutilisé par Alembic."""
+    args: dict = {"connect_timeout": 10}  # échoue vite si la base dort/injoignable
+    if settings.db_ssl_ca:
+        ca_path = Path(settings.db_ssl_ca)
+        if not ca_path.is_absolute():
+            ca_path = _BACKEND_DIR / ca_path
+        args["ssl"] = {"ca": str(ca_path)}
+    return args
 
 
 # Engine SQLAlchemy : point de connexion unique vers MySQL.
@@ -28,7 +30,8 @@ def build_connect_args() -> dict:
 # "MySQL server has gone away" quand une connexion du pool a expiré.
 engine = create_engine(
     settings.database_url,
-    pool_pre_ping=True,
+    pool_pre_ping=True,  # teste la connexion avant usage (recycle les mortes)
+    pool_recycle=280,  # recycle les connexions > ~5 min (Aiven coupe l'inactivité)
     echo=settings.sql_echo,
     connect_args=build_connect_args(),
 )
