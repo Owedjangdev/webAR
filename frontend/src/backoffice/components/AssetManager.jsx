@@ -7,7 +7,7 @@ import FormField, { CONTROL_CLASS } from './FormField.jsx'
 import { useToast } from './Toast.jsx'
 import { ErrorState, Loader } from './feedback.jsx'
 
-const ASSET_TYPES = ['overlay', 'logo', 'badge', 'image', 'audio']
+const ASSET_TYPES = ['overlay', 'logo', 'badge', 'image', 'audio', 'model']
 
 export default function AssetManager({ experienceId }) {
   const toast = useToast()
