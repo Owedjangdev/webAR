@@ -11,4 +11,5 @@ qrcode[pil]>=8.0         # génération des QR codes PNG (tire Pillow)
 bcrypt>=4.1              # hachage des mots de passe backoffice (auth)
 PyJWT>=2.8               # jetons JWT signés (auth backoffice)
 email-validator          # validation des emails (Pydantic EmailStr)
+cloudinary>=1.40         # stockage + CDN des médias uploadés (assets)
 alembic==1.18.4

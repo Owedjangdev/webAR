@@ -2,11 +2,15 @@
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from config import settings
+from database import get_db
 from routers import admin, assets, auth, experiences, hunt, partner, qr
 
 # Le schéma de base est géré par Alembic (plus de create_all au démarrage) :
@@ -28,6 +32,24 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],  # JSON + futur token d'auth
 )
 
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Renvoie une 500 propre AVEC l'en-tête CORS. Sans ce handler, une erreur
+    interne (ex. base injoignable) sort sans en-tête CORS et le navigateur l'affiche
+    comme un faux problème « Access-Control-Allow-Origin manquant », masquant la
+    vraie cause. On repose l'en-tête manuellement selon l'origine autorisée."""
+    origin = request.headers.get("origin")
+    headers: dict[str, str] = {}
+    if origin and origin in settings.cors_origins_list:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Vary"] = "Origin"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Le service est momentanément indisponible. Réessaie dans un instant."},
+        headers=headers,
+    )
+
+
 app.include_router(experiences.router)
 app.include_router(qr.router)
 app.include_router(assets.router)
@@ -48,3 +70,12 @@ app.mount(
 def health_check() -> dict[str, str]:
     """Vérifie que l'API répond (utile pour un test rapide ou un monitoring)."""
     return {"status": "ok", "service": "webar-api"}
+
+
+@app.get("/healthz", tags=["health"])
+def healthz(db: Session = Depends(get_db)) -> dict[str, str]:
+    """Sonde de disponibilité qui TOUCHE la base (SELECT 1). À pinger toutes les
+    ~10 min (UptimeRobot/cron) pour garder Render ET Aiven éveillés et éviter les
+    500 au réveil. 500 propre (avec CORS) si la base est injoignable."""
+    db.execute(text("SELECT 1"))
+    return {"status": "ok", "db": "ok"}

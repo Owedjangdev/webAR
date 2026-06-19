@@ -17,6 +17,7 @@ import PartnerQrPage from './partner/pages/PartnerQrPage.jsx'
 import PartnerStatsPage from './partner/pages/PartnerStatsPage.jsx'
 import ErrorPage from './pages/ErrorPage.jsx'
 import ExperiencePage from './pages/ExperiencePage.jsx'
+import LandingPage from './pages/LandingPage.jsx'
 
 /**
  * Composant racine de l'application : définit le routing.
@@ -28,8 +29,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Redirige la racine vers la page expérience. */}
-        <Route path="/" element={<Navigate to="/webar" replace />} />
+        {/* Racine : page d'accueil publique (présentation + accès connexion). */}
+        <Route path="/" element={<LandingPage />} />
         {/* Page visiteur : lit ?id= dans l'URL (ex. /webar?id=exp_001). */}
         <Route path="/webar" element={<ExperiencePage />} />
 

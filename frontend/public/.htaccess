@@ -1,0 +1,25 @@
+# Routing SPA (React Router) sur hébergement Apache (LWS).
+# Toute URL qui ne correspond pas à un fichier/dossier réel est renvoyée vers
+# index.html, pour que les routes côté client (/webar, /admin, /login…)
+# fonctionnent même au rafraîchissement ou en accès direct.
+#
+# ⚠️ RewriteBase suppose un déploiement à la RACINE du domaine (https://ton-domaine/).
+# Si tu déposes l'app dans un sous-dossier (https://ton-domaine/webar/), mets
+# RewriteBase /webar/ ET configure `base: '/webar/'` dans vite.config.js avant de builder.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Petit cache pour les assets versionnés (hash dans le nom) — perf mobile.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/webp "access plus 1 month"
+</IfModule>

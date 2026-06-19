@@ -5,6 +5,13 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      // Police d'affichage des titres (landing) ; le corps reste en système.
+      fontFamily: {
+        // Titres de la landing.
+        display: ['Sora', 'system-ui', 'sans-serif'],
+        // Corps de texte premium de la landing (paragraphes, labels…).
+        body: ['Manrope', 'system-ui', 'sans-serif'],
+      },
       // Palette de marque INDIGO (réf. dashboard « Aurora ») — propagée partout
       // via les classes brand-*. Bleu roi/indigo sur fond clair gris-bleu.
       colors: {
@@ -51,6 +58,11 @@ export default {
           '0%, 100%': { transform: 'scale(1.05)' },
           '50%': { transform: 'scale(1.18)' },
         },
+        // Léger flottement (visuel hero de la landing).
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-12px)' },
+        },
       },
       animation: {
         equalize: 'equalize 1s ease-in-out infinite',
@@ -59,6 +71,7 @@ export default {
         'badge-burst': 'badge-burst 1.1s ease-out both',
         'rise-in': 'rise-in 0.5s ease-out 0.15s both',
         'portal-drift': 'portal-drift 12s ease-in-out infinite',
+        float: 'float 6s ease-in-out infinite',
       },
     },
   },

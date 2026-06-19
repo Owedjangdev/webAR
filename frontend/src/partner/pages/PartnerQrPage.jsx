@@ -100,7 +100,9 @@ function QrCard({ experience, onOpenHunt }) {
             className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/30 hover:brightness-110"
           >
             <Download className="h-4 w-4" />
-            QR de départ
+            {/* « QR de départ » seulement pour la chasse (départ + étapes) ; sinon
+                un seul QR -> libellé générique. */}
+            {isHunt ? 'QR de départ' : 'Télécharger le QR'}
           </a>
         )}
 

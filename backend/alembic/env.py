@@ -7,7 +7,7 @@ from alembic import context
 # Configuration du projet : on réutilise la même URL et les mêmes modèles que
 # l'application (source de vérité unique), au lieu de dupliquer dans alembic.ini.
 from config import settings
-from database import Base
+from database import Base, build_connect_args
 import models  # noqa: F401  (importe tous les modèles → les enregistre sur Base.metadata)
 
 # Objet de configuration Alembic (valeurs de alembic.ini).
@@ -52,6 +52,8 @@ def run_migrations_online() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        # Même TLS que l'app (requis par Aiven) : réutilise le helper de database.py.
+        connect_args=build_connect_args(),
     )
 
     with connectable.connect() as connection:

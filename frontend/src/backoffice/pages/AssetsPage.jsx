@@ -18,7 +18,7 @@ export default function AssetsPage() {
     <div>
       <PageHeader
         title="Assets"
-        subtitle="Gère les médias (overlay, logo, image, audio, badge) d'une expérience."
+        subtitle="Gère les médias (overlay, logo, image, audio, badge, modèle 3D .glb) d'une expérience."
       />
 
       {loading && <Loader />}
